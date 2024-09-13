@@ -1,0 +1,93 @@
+stages:
+  - test
+  - pre-build
+  - build
+  - deploy
+
+variables:
+  REPOSITORY_TAG: "" # Define a variable to store repository tag
+  PREV_REPOSITORY_TAG: ""
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "development"' # Workflow will run only for the development branch
+
+pre-build:
+  stage: pre-build
+  image: node:18-alpine
+  script:
+    - echo $SURYA_SSH_KEY # Echo the SSH key for debugging purposes
+    - apk add --no-cache jq git openssh-client # Install necessary packages
+    - mkdir -p /root/.ssh && chmod 700 /root/.ssh # Create SSH directory with appropriate permissions
+    - echo "$SURYA_SSH_KEY" | tr -d '\r' > /root/.ssh/id_ed25519 # Copy SSH key content to file
+    - chmod 600 /root/.ssh/id_ed25519 # Set appropriate permissions for SSH key file
+    - cat /root/.ssh/id_ed25519 # Display SSH key content for debugging purposes
+    - eval "$(ssh-agent -s)" # Start SSH agent
+    - ssh-add ~/.ssh/id_ed25519 # Add SSH key to agent
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > /root/.ssh/config' # Configure SSH
+    - cat /root/.ssh/config # Display SSH config for debugging purposes
+    - rm -f REPOSITORY_TAG.txt # Remove existing repository tag file if exists
+    - rm -f PREV_REPOSITORY_TAG.txt # Remove existing prev repository tag file if exists
+    - VERSION=$(jq -r '.version' package.json) # Extract version from package.json
+    - MAJOR=$(echo $VERSION | cut -d '.' -f 1) # Extract major version
+    - MINOR=$(echo $VERSION | cut -d '.' -f 2) # Extract minor version
+    - PATCH=$(echo $VERSION | cut -d '.' -f 3) # Extract patch version
+    - NEW_PATCH=$((PATCH + 1)) # Increment patch version
+    - PREV_REPOSITORY_TAG="$MAJOR.$MINOR.$PATCH"
+    - REPOSITORY_TAG="$MAJOR.$MINOR.$NEW_PATCH" # Create new repository tag
+    - echo $REPOSITORY_TAG > REPOSITORY_TAG.txt # Save repository tag to file
+    - echo $PREV_REPOSITORY_TAG > PREV_REPOSITORY_TAG.txt #save prev repo tag to file
+    - contents="$(jq --arg new_version "$REPOSITORY_TAG" '.version = $new_version' package.json)" # Update version in package.json
+    - echo -E "${contents}" > package.json # Save updated package.json
+    - echo $contents # Display updated package.json for debugging purposes
+    - git config --global user.email "surya.anand@centedge.io" # Configure git user email
+    - git config --global user.name "suryacent" # Configure git user name
+    - git add . # Add changes to git
+    - git commit -m '[skip ci] tag-name-updated-check' # Commit changes and skip CI/CD pipeline
+    - git push git@gitlab.com:dev_team7965314/vidscale-sdk-demo-app.git HEAD:development # Push changes to repository
+  artifacts:
+    paths:
+      - REPOSITORY_TAG.txt # Archive repository tag file
+      - PREV_REPOSITORY_TAG.txt
+
+build:
+  stage: build
+  image: docker:26.0.2-dind
+  services:
+    - docker:dind
+  script:
+    - cat REPOSITORY_TAG.txt # Display repository tag for debugging purposes
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD # Login to Docker registry
+    - export REPOSITORY_TAG=$(cat REPOSITORY_TAG.txt) # Set repository tag from file
+    - echo $REPOSITORY_TAG # Display repository tag for debugging purposes
+    - docker build -t $CI_REGISTRY:vidDemo-$REPOSITORY_TAG . # Build Docker image
+    - docker push $CI_REGISTRY:vidDemo-$REPOSITORY_TAG # Push Docker image to registry
+
+
+deploy:
+  stage: deploy
+  before_script:
+    - chmod 400 $SSH_KEY
+    - export REPOSITORY_TAG=$(cat REPOSITORY_TAG.txt) # Set repository tag from file
+    - echo $REPOSITORY_TAG # Display repository tag for debugging purposes
+    - export PREV_REPOSITORY_TAG=$(cat PREV_REPOSITORY_TAG.txt) # Set repository tag from file
+    - echo $PREV_REPOSITORY_TAG # Display prev repository tag for debugging purposes
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@13.233.162.234 "
+      sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+      CONTAINERS_TO_STOP=\$(sudo docker ps -q --filter 'ancestor=$CI_REGISTRY:vidDemo-$PREV_REPOSITORY_TAG') &&
+       if [ -n \"\$CONTAINERS_TO_STOP\" ]; then
+         sudo docker stop \$CONTAINERS_TO_STOP &&
+         sudo docker rm \$CONTAINERS_TO_STOP;
+       else
+          echo 'No containers found with previous tag';
+      fi &&
+      CONTAINERS_ON_PORT=\$(sudo docker ps -q --filter 'publish=3600') &&
+       if [ -n \"\$CONTAINERS_ON_PORT\" ]; then
+         sudo docker stop \$CONTAINERS_ON_PORT &&
+         sudo docker rm \$CONTAINERS_ON_PORT;
+       else
+         echo 'No containers running on port 3600';
+      fi &&
+
+      docker run -d -p 3600:3600 $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
