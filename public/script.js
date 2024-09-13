@@ -128,6 +128,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     console.log("Left the room");
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
+    removeAllPeers();
     showThankYouMessage();
   }
 });
@@ -268,6 +269,16 @@ function removePeer(peerId) {
     peerCard.remove();
   }
   peers.delete(peerId);
+}
+
+function removeAllPeers() {
+  const peerList = document.getElementById("peerList");
+
+  while (peerList.firstChild) {
+    peerList.removeChild(peerList.firstChild);
+  }
+
+  peers.clear();
 }
 
 function showThankYouMessage() {
