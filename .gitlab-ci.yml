@@ -90,4 +90,4 @@ deploy:
          echo 'No containers running on port 3600';
       fi &&
 
-      docker run -d -p  3600:3600 -e ACCESS_KEY=$SDK_ACCESS_KEY SECRET_ACCESS_KEY=$SDK_SECRET_ACCESS_KEY  $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
+      docker run -d -p  3600:3600 -e ACCESS_KEY=$SDK_ACCESS_KEY -e SECRET_ACCESS_KEY=$SDK_SECRET_ACCESS_KEY  $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
