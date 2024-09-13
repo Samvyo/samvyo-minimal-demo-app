@@ -128,7 +128,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     console.log("Left the room");
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
-    removeAllPeers();
+    removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
   }
 });
