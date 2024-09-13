@@ -7,10 +7,10 @@ document
     event.preventDefault();
 
     const roomId = document.getElementById("roomId").value;
-    const peerId = document.getElementById("peerId").value;
+    const peerName = document.getElementById("peerName").value;
 
-    if (!roomId || !peerId) {
-      alert("Please provide both Room ID and Peer ID to join.");
+    if (!roomId ) {
+      alert("Please provide RoomId to join.");
       return;
     }
 
@@ -30,7 +30,7 @@ document
       const params = {
         sessionToken,
         roomId,
-        peerId,
+        peerName,
         produce: true,
         consume: true,
       };
@@ -128,6 +128,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     console.log("Left the room");
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
+    removeAllPeers();
     showThankYouMessage();
   }
 });
@@ -139,7 +140,7 @@ function addPeer(peerId, peerName, type) {
     peerCard.id = `peer-${peerId}`;
 
     const peerNameElement = document.createElement("div");
-    peerNameElement.textContent = peerId;
+    peerNameElement.textContent = peerName;
 
     const peerVideo = document.createElement("video");
     peerVideo.autoplay = true;
@@ -268,6 +269,16 @@ function removePeer(peerId) {
     peerCard.remove();
   }
   peers.delete(peerId);
+}
+
+function removeAllPeers() {
+  const peerList = document.getElementById("peerList");
+
+  while (peerList.firstChild) {
+    peerList.removeChild(peerList.firstChild);
+  }
+
+  peers.clear();
 }
 
 function showThankYouMessage() {
