@@ -44,7 +44,7 @@ pre-build:
     - git config --global user.name "suryacent" # Configure git user name
     - git add . # Add changes to git
     - git commit -m '[skip ci] tag-name-updated-check' # Commit changes and skip CI/CD pipeline
-    - git push git@gitlab.com:dev_team7965314/vidscale-sdk-demo-app.git HEAD:development # Push changes to repository
+    - git push git@gitlab.com:dev_team7965314/vidscale-minimal-demo-app.git HEAD:development # Push changes to repository
   artifacts:
     paths:
       - REPOSITORY_TAG.txt # Archive repository tag file
