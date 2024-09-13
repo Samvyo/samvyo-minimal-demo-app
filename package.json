@@ -6,5 +6,5 @@
     "express": "^4.21.0",
     "fs": "^0.0.1-security"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
