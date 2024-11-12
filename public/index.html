@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Videoedge Demo</title>
-    <script src="vidscale-client-js.js"></script> <!-- Ensure this path is correct -->
+    <script src="videoedge-js.js"></script> <!-- Ensure this path is correct -->
     <script src="script.js" defer></script>
     <style>
         video {
@@ -13,7 +13,7 @@
             border: 1px solid black;
         }
         
-        .peer-card {
+        .peer-card, .ss-card {
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 10px;
@@ -24,13 +24,13 @@
             align-items: center;
         }
         
-        .peer-card video {
+        .peer-card video, .ss-card video {
             width: 100%;
             height: auto;
             border: 1px solid black;
         }
         
-        .peer-list {
+        .peer-list, .screen-share-list {
             margin-top: 20px;
             display: flex;
             flex-wrap: wrap;
@@ -41,6 +41,33 @@
             display: flex;
             padding-right: 20px;
         }
+
+        .device-list{
+            margin-top: 20px;
+            display: flex;
+            width: 30vw;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            
+        }
+
+        .join-room{
+            width: 30vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #audioInput{
+            margin-right: 10px;
+            width: 14.5vw;
+    
+        }
+
+        #videoInput{
+            display: flex;
+            width: 14.5vw;
+        }
         
     </style>
 </head>
@@ -50,16 +77,34 @@
         <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
     </div> -->
-    <form type="submit">
+    <form type="submit" class="join-room">
         <input id="roomId" placeholder="Enter room Id" required></input>
         <input id="peerName" placeholder="Enter peerName"></input>
         <button id="joinButton">Join Room</button>
     </form>
     
-    <button id="leaveButton" disabled>Leave Room</button>
+    <div class="device-list">
+        <div>
+        <label for="audioInput">Choose audio input:</label>
+        <select id="audioInput">
+            <option value="">Select Audio Device</option>
+        </select>
+        </div>
+        <div>
+        <label for="videoInput">Choose video input:</label>
+        <select id="videoInput">
+            <option value="">Select Video Device</option>
+        </select>
+        </div>
+    </div>
     
+    <button id="leaveButton" disabled>Leave Room</button>
+
     <div class="peer-list" id="peerList">
         <!-- Peers will be listed here -->
+    </div>
+    <div class="screen-share-list" id="screenShareList" >
+
     </div>
 </body>
 </html>
