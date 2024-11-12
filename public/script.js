@@ -133,6 +133,11 @@ document
         //   removePeerVideo(peerId, type);
         // });
 
+        vidScaleClient.on("deviceListUpdated", () => {
+          console.log("Device list updated");
+          getAllDevices();
+        });
+
         vidScaleClient.on("micStart", ({ peerId, audioTrack, type }) => {
           console.log(`Mic started for peer: ${peerId}`);
           updatePeerAudio(peerId, audioTrack, type);
