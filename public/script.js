@@ -1,5 +1,76 @@
 let vidScaleClient = null;
+let audioDevices = null;
+let videoDevices = null;
 const peers = new Map(); // Map to store peer details
+let selectedAudioDeviceId = null;
+let selectedVideoDeviceId = null;
+const screenShares = new Map(); // Map to store screen share details
+
+const getAllDevices = async () => {
+  const vidScaleClient = await VidScale.JsSdk;
+  const availableDevices = await vidScaleClient.listDevices();
+  if (availableDevices.success) {
+    const audioDevices = availableDevices.deviceList.audioDevices;
+    const videoDevices = availableDevices.deviceList.videoDevices;
+    populateDeviceSelects(audioDevices, videoDevices);
+  }
+  console.log(availableDevices);
+};
+
+const populateDeviceSelects = (audioDevices, videoDevices) => {
+  const audioSelect = document.getElementById("audioInput");
+  const videoSelect = document.getElementById("videoInput");
+
+  audioSelect.innerHTML = "";
+  videoSelect.innerHTML = "";
+
+  if (audioDevices.length > 0) {
+    audioDevices.forEach((device, index) => {
+      const option = document.createElement("option");
+      option.value = device.deviceId;
+      option.textContent = device.label;
+      audioSelect.appendChild(option);
+    });
+    audioSelect.selectedIndex = 0;
+    selectedAudioDeviceId = audioDevices[0].deviceId;
+  } else {
+    const noAudioOption = document.createElement("option");
+    noAudioOption.value = "";
+    noAudioOption.textContent = "No Audio Devices Available";
+    audioSelect.appendChild(noAudioOption);
+  }
+
+  if (videoDevices.length > 0) {
+    videoDevices.forEach((device, index) => {
+      const option = document.createElement("option");
+      option.value = device.deviceId;
+      option.textContent = device.label;
+      videoSelect.appendChild(option);
+    });
+
+    videoSelect.selectedIndex = 0;
+    selectedVideoDeviceId = videoDevices[0].deviceId;
+  } else {
+    const noVideoOption = document.createElement("option");
+    noVideoOption.value = "";
+    noVideoOption.textContent = "No Video Devices Available";
+    videoSelect.appendChild(noVideoOption);
+  }
+
+  audioSelect.addEventListener("change", async (event) => {
+    selectedAudioDeviceId = event.target.value;
+    console.log("Selected Audio Device ID:", selectedAudioDeviceId);
+    await vidScaleClient.changeAudioInput({ deviceId: selectedAudioDeviceId });
+  });
+
+  videoSelect.addEventListener("change", async (event) => {
+    selectedVideoDeviceId = event.target.value;
+    console.log("Selected Video Device ID:", selectedVideoDeviceId);
+    await vidScaleClient.changeVideoInput({ deviceId: selectedVideoDeviceId });
+  });
+};
+
+getAllDevices();
 
 document
   .getElementById("joinButton")
@@ -9,7 +80,7 @@ document
     const roomId = document.getElementById("roomId").value;
     const peerName = document.getElementById("peerName").value;
 
-    if (!roomId ) {
+    if (!roomId) {
       alert("Please provide RoomId to join.");
       return;
     }
@@ -23,6 +94,8 @@ document
       body: JSON.stringify({ roomId }),
     });
 
+    console.log("fething session token", response);
+
     const data = await response.json();
     const sessionToken = data.sessionToken;
 
@@ -33,6 +106,11 @@ document
         peerName,
         produce: true,
         consume: true,
+        // share: true,  true if one wants to join call with screen share on by default
+        // produceAudio: false,  both should be set false to join the call without audio or video
+        // produceVideo: false,
+        audioDeviceId: selectedAudioDeviceId,
+        videoDeviceId: selectedVideoDeviceId,
       };
 
       try {
@@ -108,6 +186,16 @@ document
           removePeer(peerId);
         });
 
+        vidScaleClient.on("ssVideoStart", ({ peerId, videoTrack, type }) => {
+          console.log("received ss video start");
+          addSSVideo(peerId, videoTrack, type);
+        });
+
+        vidScaleClient.on("ssVideoStop", ({ peerId, videoTrack, type }) => {
+          console.log("received ss video stop");
+          removeSSVideo(peerId, videoTrack, type);
+        });
+
         vidScaleClient.on("error", ({ code, text }) => {
           console.error("Error code:", code, "Error text:", text);
         });
@@ -133,6 +221,56 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
   }
 });
 
+function addSSVideo(peerId, videoTrack, type) {
+  if (typeof screenShares === "undefined") {
+    console.error("screenShares is not defined.");
+    return;
+  }
+
+  if (!screenShares.has(peerId)) {
+    const ssCard = document.createElement("div");
+    ssCard.className = "ss-card";
+    ssCard.id = `ss-${peerId}`;
+
+    const ssVideo = document.createElement("video");
+
+    if (videoTrack) {
+      const videoStream = new MediaStream();
+      videoStream.addTrack(videoTrack);
+      ssVideo.srcObject = videoStream;
+
+      ssVideo
+        .play()
+        .catch((error) =>
+          console.warn(
+            `Error playing screen share video for peer ${peerId}:`,
+            error
+          )
+        );
+
+      ssVideo.autoplay = true;
+      ssVideo.playsInline = true;
+
+      ssCard.appendChild(ssVideo);
+
+      document.getElementById("screenShareList").appendChild(ssCard);
+      screenShares.set(peerId, ssCard); // Store the card in screenShares map
+    } else {
+      console.error(`Invalid video track for peer ${peerId}`);
+    }
+  } else {
+    console.warn(`Screen share already exists for peer ${peerId}`);
+  }
+}
+
+function removeSSVideo(peerId, videoTrack, type) {
+  const ssCard = document.getElementById(`ss-${peerId}`);
+  if (ssCard) {
+    ssCard.remove();
+  }
+  screenShares.delete(peerId);
+}
+
 function addPeer(peerId, peerName, type) {
   if (!peers.has(peerId)) {
     const peerCard = document.createElement("div");
@@ -144,11 +282,11 @@ function addPeer(peerId, peerName, type) {
 
     const peerVideo = document.createElement("video");
     peerVideo.autoplay = true;
-    peerVideo.playsinline = true;
+    peerVideo.playsInline = true;
 
     const peerAudio = document.createElement("audio");
     peerAudio.autoplay = true;
-    peerAudio.playsinline = true;
+    // peerAudio.playsInline = true;
 
     const muteStatusMessage =
       type === "remote" ? document.createElement("div") : null;
@@ -175,35 +313,68 @@ function addPeer(peerId, peerName, type) {
 
     if (type === "local") {
       const peerMuteButton = document.createElement("button");
-      peerMuteButton.textContent = "Mute";
+      // peerMuteButton.textContent = "Turn on mic";
+      peerMuteButton.textContent = "mute mic";
       peerMuteButton.id = "mute-button";
 
       const camToggleButton = document.createElement("button");
-      camToggleButton.textContent = "Camera Off";
+      // camToggleButton.textContent = "Switch Camera On";
+      camToggleButton.textContent = "camera off";
       camToggleButton.id = "cam-toggle-button";
+
+      const shareScreenButton = document.createElement("button");
+      shareScreenButton.textContent = "share screen";
+      shareScreenButton.id = "share-screen-button";
 
       peerMedia.appendChild(peerMuteButton);
       peerMedia.appendChild(camToggleButton);
+      peerMedia.appendChild(shareScreenButton);
       peerCard.appendChild(peerMedia);
 
       peerMuteButton.addEventListener("click", async () => {
-        if (peerMuteButton.textContent === "Mute") {
-          await vidScaleClient.muteMic();
-          peerMuteButton.textContent = "Unmute";
-        } else {
+        if (peerMuteButton.textContent === "unmute mic") {
           await vidScaleClient.unmuteMic();
-          peerMuteButton.textContent = "Mute";
+          peerMuteButton.textContent = "mute";
+        } else {
+          await vidScaleClient.muteMic();
+          peerMuteButton.textContent = "unmute mic";
+        }
+        // if (peerMuteButton.textContent === "Mute") {
+        //   await vidScaleClient.enableMic();
+        //   peerMuteButton.textContent = "Turn on MIc";
+        // } else {
+        //   await vidScaleClient.disableMic();
+        //   peerMuteButton.textContent = "Disable Mic";
+        // }
+      });
+
+      shareScreenButton.addEventListener("click", async () => {
+        console.log("share screen button clicked");
+        if (shareScreenButton.textContent === "share screen") {
+          await vidScaleClient.enableShare();
+          shareScreenButton.textContent = "stop screen share";
+        } else {
+          console.log("Disable screen share clicked");
+          await vidScaleClient.disableShare();
+          shareScreenButton.textContent = "share screen";
         }
       });
 
       camToggleButton.addEventListener("click", async () => {
-        if (camToggleButton.textContent === "Camera Off") {
+        if (camToggleButton.textContent === "camera off") {
           await vidScaleClient.disableCam();
-          camToggleButton.textContent = "Camera On";
+          camToggleButton.textContent = "camera On";
         } else {
-          await vidScaleClient.enableCam();
-          camToggleButton.textContent = "Camera Off";
+          await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
+          camToggleButton.textContent = "camera off";
         }
+        // if (camToggleButton.textContent === "Switch Camera Off") {
+        //   await vidScaleClient.disableCam();
+        //   camToggleButton.textContent = "Switch Camera On";
+        // } else {
+        //   await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
+        //   camToggleButton.textContent = "Switch Camera Off";
+        // }
       });
     }
 
