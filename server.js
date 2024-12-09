@@ -8,13 +8,12 @@ const https = require("https");
 const fs = require("fs");
 
 dotEnv.config();
-
 app.use(cors());
 app.use(express.json());
 
 const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-const serverUrl = "https://api.videoedge.io";
+const serverUrl = "https://test-api.videoedge.io";
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -74,8 +73,6 @@ const port = process.env.PORT || 3600;
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
-
 
 httpsServer.listen(port, () => {
   console.log(`Secure server running on port ${port}`);
