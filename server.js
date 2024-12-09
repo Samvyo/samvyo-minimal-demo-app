@@ -8,7 +8,6 @@ const https = require("https");
 const fs = require("fs");
 
 dotEnv.config();
-
 app.use(cors());
 app.use(express.json());
 
@@ -74,8 +73,6 @@ const port = process.env.PORT || 3600;
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
-
 
 httpsServer.listen(port, () => {
   console.log(`Secure server running on port ${port}`);
