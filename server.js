@@ -13,16 +13,18 @@ app.use(express.json());
 
 const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-const serverUrl = "https://test-api.videoedge.io";
+const serverUrl = "https://api.videoedge.io";
+// const serverUrl = "https://test-api.videoedge.io";
+// const serverUrl = "https://10.50.93.54:3400";
 
 app.use(express.static(path.join(__dirname, "public")));
 
 const privateKey = fs.readFileSync(
-  path.resolve(__dirname, "server1.key"),
+  path.resolve(__dirname, "server.key"),
   "utf8"
 );
 const certificate = fs.readFileSync(
-  path.resolve(__dirname, "server1.cert"),
+  path.resolve(__dirname, "server.crt"),
   "utf8"
 );
 
@@ -58,6 +60,7 @@ app.post("/api/create-session-token", async (req, res) => {
       });
     }
 
+    
     return res.status(400).send({
       message: "Failed to fetch session token",
     });
@@ -73,6 +76,8 @@ const port = process.env.PORT || 3600;
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 httpsServer.listen(port, () => {
   console.log(`Secure server running on port ${port}`);

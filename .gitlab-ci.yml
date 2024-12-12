@@ -73,7 +73,7 @@ deploy:
     - export PREV_REPOSITORY_TAG=$(cat PREV_REPOSITORY_TAG.txt) # Set repository tag from file
     - echo $PREV_REPOSITORY_TAG # Display prev repository tag for debugging purposes
   script:
-    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@13.233.162.234 "
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@18.158.180.92 "
       sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
       CONTAINERS_TO_STOP=\$(sudo docker ps -q --filter 'ancestor=$CI_REGISTRY:vidDemo-$PREV_REPOSITORY_TAG') &&
        if [ -n \"\$CONTAINERS_TO_STOP\" ]; then
