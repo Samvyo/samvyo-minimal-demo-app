@@ -63,7 +63,6 @@ build:
     - docker build -t $CI_REGISTRY:vidDemo-$REPOSITORY_TAG . # Build Docker image
     - docker push $CI_REGISTRY:vidDemo-$REPOSITORY_TAG # Push Docker image to registry
 
-
 deploy:
   stage: deploy
   before_script:
@@ -76,18 +75,18 @@ deploy:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@18.158.180.92 "
       sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
       CONTAINERS_TO_STOP=\$(sudo docker ps -q --filter 'ancestor=$CI_REGISTRY:vidDemo-$PREV_REPOSITORY_TAG') &&
-       if [ -n \"\$CONTAINERS_TO_STOP\" ]; then
-         sudo docker stop \$CONTAINERS_TO_STOP &&
-         sudo docker rm \$CONTAINERS_TO_STOP;
-       else
-          echo 'No containers found with previous tag';
+      if [ -n \"\$CONTAINERS_TO_STOP\" ]; then
+      sudo docker stop \$CONTAINERS_TO_STOP &&
+      sudo docker rm \$CONTAINERS_TO_STOP;
+      else
+      echo 'No containers found with previous tag';
       fi &&
       CONTAINERS_ON_PORT=\$(sudo docker ps -q --filter 'publish=3600') &&
-       if [ -n \"\$CONTAINERS_ON_PORT\" ]; then
-         sudo docker stop \$CONTAINERS_ON_PORT &&
-         sudo docker rm \$CONTAINERS_ON_PORT;
-       else
-         echo 'No containers running on port 3600';
+      if [ -n \"\$CONTAINERS_ON_PORT\" ]; then
+      sudo docker stop \$CONTAINERS_ON_PORT &&
+      sudo docker rm \$CONTAINERS_ON_PORT;
+      else
+      echo 'No containers running on port 3600';
       fi &&
 
-      docker run -d -p  3600:3600 -e ACCESS_KEY=cb3531961a44b76515c9 -e SECRET_ACCESS_KEY=17b137c97d8a907a176e984b89b33a9d4a07b32b  $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
+      docker run -d -p  3600:3600 -e ACCESS_KEY=$SDK_ACCESS_KEY -e SECRET_ACCESS_KEY=$SDK_SECRET_ACCESS_KEY  $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
