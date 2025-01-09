@@ -6,6 +6,67 @@ let selectedAudioDeviceId = null;
 let selectedVideoDeviceId = null;
 const screenShares = new Map(); // Map to store screen share details
 
+const urlParams = new URLSearchParams(window.location.search);
+
+const inputParams = {
+  videoResolution: urlParams.get("videoResolution") || "hd",
+  produce: urlParams.get("produce") !== "false",
+  produceAudio: urlParams.get("produceAudio") !== "false",
+  produceVideo: urlParams.get("produceVideo") !== "false",
+  forcePCMU: urlParams.get("forcePCMU") === "true",
+  forceH264: urlParams.get("forceH264") === "true",
+  h264Profile: urlParams.get("h264Profile") === "low" ? "low" : "high",
+  forceFPS:
+    !isNaN(Number(urlParams.get("forceFPS"))) &&
+    Number(urlParams.get("forceFPS")) > 0 &&
+    Number(urlParams.get("forceFPS")) <= 60
+      ? Number(urlParams.get("forceFPS"))
+      : 30,
+  enableWebcamLayers: urlParams.get("enableWebcamLayers") !== "false",
+  numSimulcastStreams:
+    !isNaN(Number(urlParams.get("numSimulcastStreams"))) &&
+    Number(urlParams.get("numSimulcastStreams")) > 0 &&
+    Number(urlParams.get("numSimulcastStreams")) <= 3
+      ? Number(urlParams.get("numSimulcastStreams"))
+      : 3,
+  videoBitRates: [
+    !isNaN(Number(urlParams.get("videoBitRateHigh"))) &&
+    Number(urlParams.get("videoBitRateHigh")) > 50 &&
+    Number(urlParams.get("videoBitRateHigh")) <= 1000
+      ? Number(urlParams.get("videoBitRateHigh"))
+      : 500,
+    !isNaN(Number(urlParams.get("videoBitRateMedium"))) &&
+    Number(urlParams.get("videoBitRateMedium")) > 30 &&
+    Number(urlParams.get("videoBitRateMedium")) <= 300
+      ? Number(urlParams.get("videoBitRateMedium"))
+      : 250,
+    !isNaN(Number(urlParams.get("videoBitRateLow"))) &&
+    Number(urlParams.get("videoBitRateLow")) > 10 &&
+    Number(urlParams.get("videoBitRateLow")) <= 125
+      ? Number(urlParams.get("videoBitRateLow"))
+      : 100,
+  ],
+  autoGainControl: urlParams.get("autoGainControl") !== "false",
+  echoCancellation: urlParams.get("echoCancellation") !== "false",
+  noiseSuppression: urlParams.get("noiseSuppression") !== "false",
+  sampleRate:
+    !isNaN(Number(urlParams.get("sampleRate"))) &&
+    Number(urlParams.get("sampleRate")) >= 8000 &&
+    Number(urlParams.get("sampleRate")) <= 64000
+      ? Number(urlParams.get("sampleRate"))
+      : 44000,
+  channelCount:
+    !isNaN(Number(urlParams.get("channelCount"))) &&
+    Number(urlParams.get("channelCount")) >= 1 &&
+    Number(urlParams.get("channelCount")) <= 8
+      ? Number(urlParams.get("channelCount"))
+      : 1,
+  msRegion: "us", // Default region
+  backgroundImage: "", // Placeholder for image link
+};
+
+console.log("input params", inputParams);
+
 const getAllDevices = async () => {
   const vidScaleClient = await VidScale.JsSdk;
   const availableDevices = await vidScaleClient.listDevices();
@@ -111,6 +172,7 @@ document
         // produceVideo: false,
         audioDeviceId: selectedAudioDeviceId,
         videoDeviceId: selectedVideoDeviceId,
+        ...inputParams,
       };
 
       try {
