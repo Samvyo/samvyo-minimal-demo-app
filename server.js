@@ -13,7 +13,7 @@ app.use(express.json());
 
 const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-const serverUrl = "https://api.videoedge.io";
+const serverUrl = "https://test-api-v2.videoedge.io";
 // const serverUrl = "https://test-api.videoedge.io";
 // const serverUrl = "https://10.50.93.54:3400";
 
@@ -35,10 +35,9 @@ const httpsServer = https.createServer(
 
 app.post("/api/create-session-token", async (req, res) => {
   const { roomId } = req.body;
-  // console.log(roomId);
   try {
     const response = await axios.post(
-      `${serverUrl}/api/org/create-session-token`,
+      `${serverUrl}/api/siteSetting/sessionToken`,
       {
         accessKey,
         secretAccessKey,
@@ -46,21 +45,14 @@ app.post("/api/create-session-token", async (req, res) => {
       }
     );
 
-    if (response.data.message === "Session token generated successfully") {
+    // console.log(response);
+    if (response.data.success) {
       return res.status(200).send({
         message: "Session token fetched successfully",
         sessionToken: response.data.sessionToken,
       });
     }
 
-    if (response.data.message === "Active session exists for this roomId") {
-      return res.status(200).send({
-        message: "Active session token fetched successfully",
-        sessionToken: response.data.activeSessionToken,
-      });
-    }
-
-    
     return res.status(400).send({
       message: "Failed to fetch session token",
     });

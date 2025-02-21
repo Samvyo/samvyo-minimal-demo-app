@@ -68,7 +68,7 @@ const inputParams = {
 console.log("input params", inputParams);
 
 const getAllDevices = async () => {
-  const vidScaleClient = await VidScale.JsSdk;
+  const vidScaleClient = await VidScale.JsSdk_v2;
   const availableDevices = await vidScaleClient.listDevices();
   if (availableDevices.success) {
     const audioDevices = availableDevices.deviceList.audioDevices;
@@ -176,7 +176,7 @@ document
       };
 
       try {
-        vidScaleClient = await VidScale.JsSdk.joinRoom(params);
+        vidScaleClient = await VidScale.JsSdk_v2.joinRoom(params);
         console.log("Successfully joined the room:", vidScaleClient);
 
         // Set up event listeners
