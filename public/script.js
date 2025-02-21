@@ -147,18 +147,24 @@ document
     }
 
     // Fetch session token
-    const response = await fetch("/api/create-session-token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ roomId }),
-    });
+    let sessionToken;
 
-    console.log("fething session token", response);
+    try {
+      const response = await fetch("/api/create-session-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roomId }),
+      });
 
-    const data = await response.json();
-    const sessionToken = data.sessionToken;
+      console.log("fething session token", response);
+
+      const data = await response.json();
+      sessionToken = data.sessionToken;
+    } catch (error) {
+      console.log("Error while verifying session", error);
+    }
 
     if (sessionToken) {
       const params = {
