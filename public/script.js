@@ -68,7 +68,7 @@ const inputParams = {
 console.log("input params", inputParams);
 
 const getAllDevices = async () => {
-  const vidScaleClient = await VidScale.JsSdk_v2;
+  const vidScaleClient = await samvyo.JsSdk;
   const availableDevices = await vidScaleClient.listDevices();
   if (availableDevices.success) {
     const audioDevices = availableDevices.deviceList.audioDevices;
@@ -182,7 +182,7 @@ document
       };
 
       try {
-        vidScaleClient = await VidScale.JsSdk_v2.joinRoom(params);
+        vidScaleClient = await samvyo.JsSdk.joinRoom(params);
         console.log("Successfully joined the room:", vidScaleClient);
 
         // Set up event listeners

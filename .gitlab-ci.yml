@@ -60,7 +60,7 @@ build:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD # Login to Docker registry
     - export REPOSITORY_TAG=$(cat REPOSITORY_TAG.txt) # Set repository tag from file
     - echo $REPOSITORY_TAG # Display repository tag for debugging purposes
-    - docker build -t $CI_REGISTRY:vidDemo-$REPOSITORY_TAG . # Build Docker image
+    - docker build --build-arg SDK_ACCESS_KEY=$SDK_ACCESS_KEY --build-arg SDK_SECRET_ACCESS_KEY=$SDK_SECRET_ACCESS_KEY -t $CI_REGISTRY:vidDemo-$REPOSITORY_TAG . # Build Docker image
     - docker push $CI_REGISTRY:vidDemo-$REPOSITORY_TAG # Push Docker image to registry
 
 deploy:
@@ -88,4 +88,4 @@ deploy:
       else 
       echo 'No containers running on port 3600';
       fi &&
-      sudo docker run -d -p 3600:3600 -e ACCESS_KEY='bae4bcd1-1998-478d-b510-04b4604e47fe-3-1' -e SECRET_ACCESS_KEY='0a49cbd480878657f5dae3c7419763e7b7adc40d' $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
+      sudo docker run -d -p 3600:3600 $CI_REGISTRY:vidDemo-$REPOSITORY_TAG"
