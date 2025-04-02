@@ -5,7 +5,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "fs": "^0.0.1-security",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "samvyo-js": "^1.1.19"
   },
   "version": "1.0.18"
 }
