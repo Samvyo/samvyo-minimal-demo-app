@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samvyo Demo</title>
-    <!-- <script src="videoedge-js.js"></script>  -->
+    <script src="samvyo-js.js">
+    </script> 
     <!-- Ensure this path is correct -->
-    <script src="https://unpkg.com/samvyo-js@latest/dest/Samvyo-js.js"></script>
+    <!-- <script src="https://unpkg.com/samvyo-js@latest/dest/Samvyo-js.js"></script> -->
     <script src="script.js" defer></script>
     <style>
         video {
@@ -99,9 +100,11 @@
         </select>
         </div>
     </div>
-    
+    <button id="recordingStartButton" disabled> Start Recording</button>
+    <button id="recordingStopButton" disabled>Stop Recording</button>
     <button id="leaveButton" disabled>Leave Room</button>
-
+<div id="additional"></div>
+<div id="notification"></div>
     <div class="peer-list" id="peerList">
         <!-- Peers will be listed here -->
     </div>

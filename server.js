@@ -13,9 +13,9 @@ app.use(express.json());
 
 const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-const serverUrl = "https://test-api-v2.samvyo.com";
+// const serverUrl = "https://test-api-v2.samvyo.com";
 // const serverUrl = "https://test-api.videoedge.io";
-// const serverUrl = "https://10.50.93.54:3400";
+const serverUrl = "https://192.168.0.154:4100";
 
 app.use(express.static(path.join(__dirname, "public")));
 
