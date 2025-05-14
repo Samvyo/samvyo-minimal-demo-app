@@ -63,6 +63,9 @@ const inputParams = {
       : 1,
   msRegion: "us", // Default region
   backgroundImage: "", // Placeholder for image link
+  authenticationRequired:urlParams.get("auth")!=="false",
+  peerType:urlParams.get("peerType"),
+  password:urlParams.get("password")
 };
 
 console.log("input params", inputParams);
@@ -209,6 +212,8 @@ document
         vidScaleClient.on("micStart", ({ peerId, audioTrack, type }) => {
           console.log(`Mic started for peer: ${peerId}`);
           updatePeerAudio(peerId, audioTrack, type);
+          if(type==="remote")
+          document.getElementById("additional").style.display="none";
         });
 
         vidScaleClient.on("micEnd", ({ peerId }) => {
@@ -269,12 +274,41 @@ document
           removeSSVideo(peerId, videoTrack, type);
         });
 
+        vidScaleClient.on("moderatorAuthentication", ({ moderatorName, requesterName,requesterPeerId, text }) => {
+          console.log("received moderator authentication message");
+          showModAuth({requesterName,requesterPeerId,text})
+        });
+
+        vidScaleClient.on("authenticationRequested", ({ moderatorName, requesterName,requesterPeerId, text }) => {
+          console.log("Moderator authentication required to join room");
+          showAuthNotification({requesterName,requesterPeerId,text})
+        });
+
         vidScaleClient.on("error", ({ code, text }) => {
           console.error("Error code:", code, "Error text:", text);
         });
 
+        vidScaleClient.on("notification", ({ eventType,eventText }) => {
+          console.error("Error type:", eventType, "Error text:", eventText);
+          alert(`${eventType}: ${eventText}`)
+        });
+
+        vidScaleClient.on("recordingStarted", ({peerId,startTime}) => {
+          console.log(`Recording has been started in this room at ${startTime}`);
+          alert(`Recording has been started on the room at: ${startTime}`);
+          // The start time is provided as a unix timestamp value, please use a library like moment to convert it to a readable format like "HH:MM DD-MM-YYYY"
+        });
+
+        vidScaleClient.on("recordingEnded", () => {
+          console.log(`Recording has been ended on this room at`);
+          alert(`Recording has been ended on the room at`);
+        });
+
         document.getElementById("leaveButton").disabled = false;
+        document.getElementById("recordingStartButton").disabled = false;
+        document.getElementById("recordingStopButton").disabled = false;
         document.getElementById("joinButton").disabled = true;
+
       } catch (error) {
         console.error("Error joining room:", error);
       }
@@ -288,11 +322,69 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     await vidScaleClient.leaveRoom();
     console.log("Left the room");
     document.getElementById("leaveButton").disabled = true;
+    document.getElementById("recordingStartButton").disabled = true;
+        document.getElementById("recordingStopButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
   }
 });
+
+document.getElementById("recordingStartButton").addEventListener("click", async () => {
+  if (vidScaleClient) {
+    await vidScaleClient.startRecording({recordingType:"av",outputType:"mp4"});
+    console.log("Recording started");
+    // document.getElementById("leaveButton").disabled = true;
+    document.getElementById("recordingStartButton").disabled = true;
+        document.getElementById("recordingStopButton").disabled = false;
+    // document.getElementById("joinButton").disabled = false;
+    // removeAllPeers(); //removes the peerList div upon leaving the room
+    // showThankYouMessage();
+  }
+});
+
+document.getElementById("recordingStopButton").addEventListener("click", async () => {
+  if (vidScaleClient) {
+    await vidScaleClient.stopRecording();
+    console.log("Recording Ended");
+    // document.getElementById("leaveButton").disabled = true;
+    document.getElementById("recordingStartButton").disabled = false;
+        document.getElementById("recordingStopButton").disabled = true;
+    // document.getElementById("joinButton").disabled = false;
+    // removeAllPeers(); //removes the peerList div upon leaving the room
+    // showThankYouMessage();
+  }
+});
+
+function showModAuth({requesterName,requesterPeerId,text}){
+  const div = document.getElementById("additional");
+  var span = document.createElement("span");
+  span.innerHTML=text;
+  div.appendChild(span);
+  const button1 = document.createElement("button");
+  button1.innerHTML="Allow"
+  button1.onclick = ()=>{
+    vidScaleClient.allowRoomJoin(requesterPeerId);
+    div.style.display="none";
+  };
+  div.appendChild(button1);
+  const button2 = document.createElement("button");
+  button2.innerHTML="Deny"
+  button2.onclick = ()=>{
+    vidScaleClient.denyRoomJoin(requesterPeerId);
+    div.style.display="none";
+  }
+  div.appendChild(button2);
+  
+}
+
+function showAuthNotification({requesterName,requesterPeerId,text}){
+  const div = document.getElementById("additional");
+  var span = document.createElement("span");
+  span.innerHTML=text;
+  div.appendChild(span);  
+}
+
 
 function addSSVideo(peerId, videoTrack, type) {
   if (typeof screenShares === "undefined") {
