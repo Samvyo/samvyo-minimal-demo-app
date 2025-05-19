@@ -17,7 +17,7 @@ module.exports = {
   P2pSdk: _P2pSdk.P2pSdk
 };
 
-},{"./lib/JsSdk":2,"./lib/JsSdk_v1":3,"./p2p/lib/P2pSdk":131}],2:[function(require,module,exports){
+},{"./lib/JsSdk":2,"./lib/JsSdk_v1":3,"./p2p/lib/P2pSdk":132}],2:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -50,6 +50,7 @@ var _randomName = _interopRequireDefault(require("./utils/randomName"));
 var _chooseMedia = require("./utils/chooseMedia");
 var _getUSerMediaConstraints = require("./utils/getUSerMediaConstraints");
 var _constants = require("./utils/constants");
+var _verifyfileTypes = require("./utils/verifyfileTypes");
 var _excluded = ["senderPeerId", "mediaTag", "sender", "audioStatus", "videoStatus", "senderParticipantType", "type", "producerPaused"];
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
 function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
@@ -1000,7 +1001,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
       var localRecordingType = recordingType && ((recordingType === null || recordingType === void 0 ? void 0 : recordingType.toLowerCase()) === 'av' || (recordingType === null || recordingType === void 0 ? void 0 : recordingType.toLowerCase()) === 'audiovideo') ? _constants.MERGE : _constants.MERGEA;
 
       // Allowed list of qualities
-      if (outputType.toLowerCase() === "hls" || outputType.toLowerCase() === "mp4") {} else {
+      if (outputType && outputType.toLowerCase() === "hls" || outputType.toLowerCase() === "mp4") {} else {
         logger.error("Invalid outut type");
         return {
           success: false,
@@ -1008,7 +1009,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
         };
       }
       // let localOutputQualities;
-      if (outputType.toLowerCase() === "hls" && !(0, _verifyOutputQualites.isValidOutputQualities)(outputQualities)) {
+      if (outputType && outputType.toLowerCase() === "hls" && outputQualities && !(0, _verifyOutputQualites.isValidOutputQualities)(outputQualities)) {
         logger.error("Invalid outut qualities");
         return {
           success: false,
@@ -1088,6 +1089,141 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
         // No need to alert the user about the livestreaming end event
       } else {
         _this.emit("recordingEnded", {});
+      }
+    });
+    (0, _defineProperty2["default"])(_this, "startProcessing", /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee14() {
+      var _ref20,
+        _ref20$inputFiles,
+        inputFiles,
+        _ref20$outputQualitie,
+        outputQualities,
+        _ref20$bucket,
+        bucket,
+        _ref20$cloud,
+        cloud,
+        _ref20$region,
+        region,
+        requestId,
+        verifyFilesRes,
+        _iterator,
+        _step,
+        _step$value,
+        type,
+        url,
+        message,
+        _args14 = arguments;
+      return _regenerator["default"].wrap(function _callee14$(_context14) {
+        while (1) switch (_context14.prev = _context14.next) {
+          case 0:
+            _ref20 = _args14.length > 0 && _args14[0] !== undefined ? _args14[0] : {}, _ref20$inputFiles = _ref20.inputFiles, inputFiles = _ref20$inputFiles === void 0 ? [] : _ref20$inputFiles, _ref20$outputQualitie = _ref20.outputQualities, outputQualities = _ref20$outputQualitie === void 0 ? null : _ref20$outputQualitie, _ref20$bucket = _ref20.bucket, bucket = _ref20$bucket === void 0 ? null : _ref20$bucket, _ref20$cloud = _ref20.cloud, cloud = _ref20$cloud === void 0 ? null : _ref20$cloud, _ref20$region = _ref20.region, region = _ref20$region === void 0 ? null : _ref20$region;
+            logger.debug("Processing of Files requested for:%o", inputFiles);
+            requestId = Math.round(Math.random() * 10000000);
+            _context14.next = 5;
+            return (0, _verifyfileTypes.verifyFiles)(inputFiles);
+          case 5:
+            verifyFilesRes = _context14.sent;
+            if (!verifyFilesRes.success) {
+              _context14.next = 18;
+              break;
+            }
+            if (!(outputQualities && !(0, _verifyOutputQualites.isValidOutputQualities)(outputQualities))) {
+              _context14.next = 10;
+              break;
+            }
+            logger.error("Invalid outut qualities");
+            return _context14.abrupt("return", {
+              success: false,
+              reason: "Invalid outputQualities: ".concat(JSON.stringify(outputQualities), ". ") + "Allowed values are ".concat(Array.from(_verifyOutputQualites.ALLOWED_QUALITIES).join(', '), ".")
+            });
+          case 10:
+            _this._processingStartedByMe = _objectSpread(_objectSpread({}, _this._processingStartedByMe), {}, (0, _defineProperty2["default"])({}, requestId, {}));
+            _iterator = _createForOfIteratorHelper(inputFiles);
+            try {
+              for (_iterator.s(); !(_step = _iterator.n()).done;) {
+                _step$value = _step.value, type = _step$value.type, url = _step$value.url;
+                _this._processingStartedByMe = _objectSpread(_objectSpread({}, _this._processingStartedByMe), {}, (0, _defineProperty2["default"])({}, requestId, _objectSpread(_objectSpread({}, _this._processingStartedByMe[requestId]), {}, (0, _defineProperty2["default"])({}, url, {
+                  type: type,
+                  url: url,
+                  status: "pending"
+                }))));
+              }
+            } catch (err) {
+              _iterator.e(err);
+            } finally {
+              _iterator.f();
+            }
+            message = {
+              id: "processVideos",
+              peerId: _this.data.inputParams.peerId,
+              roomName: _this.data.inputParams.roomId,
+              inputFiles: inputFiles,
+              outputQualities: outputQualities,
+              bucket: bucket,
+              cloud: cloud,
+              region: region,
+              requestId: requestId,
+              type: _constants.PROCESS
+            };
+            _this._sendMessage(message);
+            return _context14.abrupt("return", {
+              success: true
+            });
+          case 18:
+            return _context14.abrupt("return", verifyFilesRes);
+          case 19:
+          case "end":
+            return _context14.stop();
+        }
+      }, _callee14);
+    })));
+    (0, _defineProperty2["default"])(_this, "checkProcessingStatus", function (_ref21) {
+      var requestId = _ref21.requestId;
+      logger.debug("Going to check processing status for request Id:%s", requestId);
+      if (_this._processingStartedByMe[requestId]) {
+        return {
+          success: true,
+          details: _this._processingStartedByMe[requestId]
+        };
+      } else return {
+        success: true,
+        details: _this._processingStartedByMe
+      };
+    });
+    (0, _defineProperty2["default"])(_this, "handleProcessingStart", function (details) {
+      var processingStartTime = details.processingStartTime,
+        processingNo = details.processingNo,
+        requestId = details.requestId;
+      logger.debug("handleProcessingStart()| received message is:%o", details);
+      _this.emit("processingStarted", {
+        processingStartTime: processingStartTime,
+        requestId: requestId
+      });
+    });
+    (0, _defineProperty2["default"])(_this, "handleProcessingCompletion", function (details) {
+      var totalProcessingTime = details.totalProcessingTime,
+        hlsfileKey = details.hlsfileKey,
+        size = details.size,
+        originalFile = details.originalFile,
+        lastFile = details.lastFile,
+        requestId = details.requestId;
+      logger.debug("handleProcessingCompletion()| received message is:%o", details);
+      logger.debug("Before update, Total files to be processed are:%o", _this._processingStartedByMe);
+      if (_this._processingStartedByMe[originalFile]) {
+        _this._processingStartedByMe = _objectSpread(_objectSpread({}, _this._processingStartedByMe), {}, (0, _defineProperty2["default"])({}, requestId, _objectSpread(_objectSpread({}, _this._processingStartedByMe[requestId]), {}, (0, _defineProperty2["default"])({}, originalFile, _objectSpread(_objectSpread({}, _this._processingStartedByMe[originalFile]), {}, {
+          status: "completed",
+          hlsfileKey: hlsfileKey,
+          size: size,
+          totalProcessingTime: totalProcessingTime
+        })))));
+      }
+      logger.debug("After update, Total files to be processed are:%o", _this._processingStartedByMe);
+      _this.emit("processingCompleted", details);
+      if (lastFile) {
+        logger.debug("The last file processing has been completed! Remove all the files that has been completed with the same requesterId");
+        var localProcessings = _objectSpread({}, _this._processingStartedByMe);
+        delete localProcessings[requestId];
+        logger.debug("After deleting the current requestId:%o", localProcessings);
+        _this._processingStartedByMe = localProcessings;
       }
     });
     _this._closed = false;
@@ -1291,25 +1427,25 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "init",
     value: function () {
-      var _init = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee14(inputParams) {
+      var _init = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee15(inputParams) {
         var device;
-        return _regenerator["default"].wrap(function _callee14$(_context14) {
-          while (1) switch (_context14.prev = _context14.next) {
+        return _regenerator["default"].wrap(function _callee15$(_context15) {
+          while (1) switch (_context15.prev = _context15.next) {
             case 0:
               logger.debug("init() | The input parameters are:%O", inputParams);
               this.data.inputParams = inputParams;
               device = mediasoup.detectDevice();
               logger.debug("The device is:%O", device);
-              _context14.next = 6;
+              _context15.next = 6;
               return this.listDevicesInternal();
             case 6:
-              _context14.next = 8;
+              _context15.next = 8;
               return this._initSocket();
             case 8:
             case "end":
-              return _context14.stop();
+              return _context15.stop();
           }
-        }, _callee14, this);
+        }, _callee15, this);
       }));
       function init(_x11) {
         return _init.apply(this, arguments);
@@ -1319,11 +1455,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "_initSocket",
     value: function () {
-      var _initSocket2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee17() {
+      var _initSocket2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee18() {
         var _this2 = this;
         var globalThis, participantData, socketAddress;
-        return _regenerator["default"].wrap(function _callee17$(_context17) {
-          while (1) switch (_context17.prev = _context17.next) {
+        return _regenerator["default"].wrap(function _callee18$(_context18) {
+          while (1) switch (_context18.prev = _context18.next) {
             case 0:
               // let roomType = ;
               globalThis = this; //  let participantType= "moderator";
@@ -1338,10 +1474,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               logger.info("Going to create  a new socket! with address: ".concat(_constants._security.autoscalerURL, ", roomType: ").concat(this.data.inputParams.roomType));
               this._socket = new _socket.WebSocketTransport(socketAddress, true);
               this._listenToSocket();
-              this._socket.on("notify", function (_ref19) {
-                var type = _ref19.type,
-                  title = _ref19.title,
-                  message = _ref19.message;
+              this._socket.on("notify", function (_ref22) {
+                var type = _ref22.type,
+                  title = _ref22.title,
+                  message = _ref22.message;
                 _this2.emit("notification", {
                   eventType: type,
                   eventText: "".concat(title, ": ").concat(message),
@@ -1370,9 +1506,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._socket.on("validationAlert", function (message) {
                 logger.info("Validation alert happened");
               });
-              this._socket.on("alreadyActive", function (_ref20) {
-                var title = _ref20.title,
-                  text = _ref20.text;
+              this._socket.on("alreadyActive", function (_ref23) {
+                var title = _ref23.title,
+                  text = _ref23.text;
                 _this2.emit("notification", {
                   eventType: "alreadyActive",
                   eventText: "This peer already has an active connection",
@@ -1388,9 +1524,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   roomId: _this2.data.inputParams.roomId
                 });
               });
-              this._socket.on("close", function (_ref21) {
-                var code = _ref21.code,
-                  reason = _ref21.reason;
+              this._socket.on("close", function (_ref24) {
+                var code = _ref24.code,
+                  reason = _ref24.reason;
                 logger.info("socket closed with code ".concat(code));
                 if (code !== 4500 && code !== 4100) {
                   var closeReason = reason ? reason : "Connection to server closed unexpectedly! Trying to reconnect.";
@@ -1401,10 +1537,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   _this2.close();
                 }
               });
-              this._socket.on("connected", /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee15() {
+              this._socket.on("connected", /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee16() {
                 var message;
-                return _regenerator["default"].wrap(function _callee15$(_context15) {
-                  while (1) switch (_context15.prev = _context15.next) {
+                return _regenerator["default"].wrap(function _callee16$(_context16) {
+                  while (1) switch (_context16.prev = _context16.next) {
                     case 0:
                       logger.info("Socket connected");
                       if (!globalThis.pc || !globalThis._sendTransport || !globalThis._recvTransport) {
@@ -1451,31 +1587,31 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                       }
                     case 2:
                     case "end":
-                      return _context15.stop();
+                      return _context16.stop();
                   }
-                }, _callee15);
+                }, _callee16);
               })));
               this._socket.on("defaultJoinStatus", /*#__PURE__*/function () {
-                var _ref23 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee16(message) {
-                  return _regenerator["default"].wrap(function _callee16$(_context16) {
-                    while (1) switch (_context16.prev = _context16.next) {
+                var _ref26 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee17(message) {
+                  return _regenerator["default"].wrap(function _callee17$(_context17) {
+                    while (1) switch (_context17.prev = _context17.next) {
                       case 0:
                         logger.info(" Socket defaultjoinstatus:%O", message);
                       case 1:
                       case "end":
-                        return _context16.stop();
+                        return _context17.stop();
                     }
-                  }, _callee16);
+                  }, _callee17);
                 }));
                 return function (_x12) {
-                  return _ref23.apply(this, arguments);
+                  return _ref26.apply(this, arguments);
                 };
               }());
             case 15:
             case "end":
-              return _context17.stop();
+              return _context18.stop();
           }
-        }, _callee17, this);
+        }, _callee18, this);
       }));
       function _initSocket() {
         return _initSocket2.apply(this, arguments);
@@ -1539,10 +1675,16 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               _this3.setRecordingStatusEnded(parsedMessage);
               break;
             case "startDefaultRecording":
-              _this3.startRecording();
+              _this3.startRecording(parsedMessage);
               break;
             case "mediaToggled":
               _this3.mediaToggled(parsedMessage);
+              break;
+            case "processingStarted":
+              _this3.handleProcessingStart(parsedMessage);
+              break;
+            case "processingCompleted":
+              _this3.handleProcessingCompletion(parsedMessage);
               break;
             //   case "roomCreationUnsuccessful":
             //     this.showCommonAlert(parsedMessage);
@@ -1703,10 +1845,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "onExistingParticipants",
     value: function () {
-      var _onExistingParticipants = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee18(msg) {
+      var _onExistingParticipants = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee19(msg) {
         var that;
-        return _regenerator["default"].wrap(function _callee18$(_context18) {
-          while (1) switch (_context18.prev = _context18.next) {
+        return _regenerator["default"].wrap(function _callee19$(_context19) {
+          while (1) switch (_context19.prev = _context19.next) {
             case 0:
               logger.debug("Onexisting participant message:%O", msg);
               this._routerRtpCapabilities = msg.routerRtpCapabilities;
@@ -1721,22 +1863,22 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 peerRole: this.data.inputParams.peerType
               });
               if (!this.data.inputParams.produce) {
-                _context18.next = 12;
+                _context19.next = 12;
                 break;
               }
-              _context18.next = 10;
+              _context19.next = 10;
               return this._createSendTransport();
             case 10:
-              _context18.next = 13;
+              _context19.next = 13;
               break;
             case 12:
               logger.debug("Produce is false!");
             case 13:
               if (!this.data.inputParams.consume) {
-                _context18.next = 20;
+                _context19.next = 20;
                 break;
               }
-              _context18.next = 16;
+              _context19.next = 16;
               return this._createRecvTransport();
             case 16:
               that = this;
@@ -1750,15 +1892,15 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   });
                 });
               }
-              _context18.next = 21;
+              _context19.next = 21;
               break;
             case 20:
               logger.debug("Consume is false!");
             case 21:
             case "end":
-              return _context18.stop();
+              return _context19.stop();
           }
-        }, _callee18, this);
+        }, _callee19, this);
       }));
       function onExistingParticipants(_x13) {
         return _onExistingParticipants.apply(this, arguments);
@@ -1798,9 +1940,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "leaveRoom",
     value: function () {
-      var _leaveRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee19() {
-        return _regenerator["default"].wrap(function _callee19$(_context19) {
-          while (1) switch (_context19.prev = _context19.next) {
+      var _leaveRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee20() {
+        return _regenerator["default"].wrap(function _callee20$(_context20) {
+          while (1) switch (_context20.prev = _context20.next) {
             case 0:
               logger.debug("Leave room is called!!");
               if (this._roomStatus === "connected") {
@@ -1818,9 +1960,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               }
             case 2:
             case "end":
-              return _context19.stop();
+              return _context20.stop();
           }
-        }, _callee19, this);
+        }, _callee20, this);
       }));
       function leaveRoom() {
         return _leaveRoom.apply(this, arguments);
@@ -1830,9 +1972,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "closeRoom",
     value: function () {
-      var _closeRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee20() {
-        return _regenerator["default"].wrap(function _callee20$(_context20) {
-          while (1) switch (_context20.prev = _context20.next) {
+      var _closeRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee21() {
+        return _regenerator["default"].wrap(function _callee21$(_context21) {
+          while (1) switch (_context21.prev = _context21.next) {
             case 0:
               if (this._roomStatus === "connected") {
                 this._sendMessage({
@@ -1846,9 +1988,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               }
             case 1:
             case "end":
-              return _context20.stop();
+              return _context21.stop();
           }
-        }, _callee20, this);
+        }, _callee21, this);
       }));
       function closeRoom() {
         return _closeRoom.apply(this, arguments);
@@ -1858,22 +2000,22 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "listDevicesInternal",
     value: function () {
-      var _listDevicesInternal = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee22() {
+      var _listDevicesInternal = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee23() {
         var _this4 = this;
         var res;
-        return _regenerator["default"].wrap(function _callee22$(_context22) {
-          while (1) switch (_context22.prev = _context22.next) {
+        return _regenerator["default"].wrap(function _callee23$(_context23) {
+          while (1) switch (_context23.prev = _context23.next) {
             case 0:
               navigator.mediaDevices.ondevicechange = /*#__PURE__*/function () {
-                var _ref24 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee21(event) {
+                var _ref27 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee22(event) {
                   var response;
-                  return _regenerator["default"].wrap(function _callee21$(_context21) {
-                    while (1) switch (_context21.prev = _context21.next) {
+                  return _regenerator["default"].wrap(function _callee22$(_context22) {
+                    while (1) switch (_context22.prev = _context22.next) {
                       case 0:
-                        _context21.next = 2;
+                        _context22.next = 2;
                         return (0, _chooseMedia.updatedDeviceList)();
                       case 2:
-                        response = _context21.sent;
+                        response = _context22.sent;
                         logger.info("Media devices changed!:%O", response);
                         if (response.audioDevices && response.audioDevices.length > 0) {
                           _this4._deviceList.audioDevices = response.audioDevices;
@@ -1888,36 +2030,36 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                         _this4.emit("deviceListUpdated");
                       case 9:
                       case "end":
-                        return _context21.stop();
+                        return _context22.stop();
                     }
-                  }, _callee21);
+                  }, _callee22);
                 }));
                 return function (_x14) {
-                  return _ref24.apply(this, arguments);
+                  return _ref27.apply(this, arguments);
                 };
               }();
               if (!this._deviceList) {
-                _context22.next = 5;
+                _context23.next = 5;
                 break;
               }
-              return _context22.abrupt("return");
+              return _context23.abrupt("return");
             case 5:
-              _context22.next = 7;
+              _context23.next = 7;
               return (0, _chooseMedia.loadAllAvailableDevices)();
             case 7:
-              res = _context22.sent;
+              res = _context23.sent;
               if (!res.success) {
-                _context22.next = 12;
+                _context23.next = 12;
                 break;
               }
               this._deviceList = res.deviceList;
               devicesList = this._deviceList;
-              return _context22.abrupt("return");
+              return _context23.abrupt("return");
             case 12:
             case "end":
-              return _context22.stop();
+              return _context23.stop();
           }
-        }, _callee22, this);
+        }, _callee23, this);
       }));
       function listDevicesInternal() {
         return _listDevicesInternal.apply(this, arguments);
@@ -1927,10 +2069,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "enableMic",
     value: function () {
-      var _enableMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee23() {
+      var _enableMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee24() {
         var _this5 = this;
-        var _ref25,
-          _ref25$deviceId,
+        var _ref28,
+          _ref28$deviceId,
           deviceId,
           autoGainControl,
           noiseSuppression,
@@ -1941,18 +2083,18 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           forcePCMA,
           track,
           device,
-          _args23 = arguments;
-        return _regenerator["default"].wrap(function _callee23$(_context23) {
-          while (1) switch (_context23.prev = _context23.next) {
+          _args24 = arguments;
+        return _regenerator["default"].wrap(function _callee24$(_context24) {
+          while (1) switch (_context24.prev = _context24.next) {
             case 0:
-              _ref25 = _args23.length > 0 && _args23[0] !== undefined ? _args23[0] : {}, _ref25$deviceId = _ref25.deviceId, deviceId = _ref25$deviceId === void 0 ? null : _ref25$deviceId, autoGainControl = _ref25.autoGainControl, noiseSuppression = _ref25.noiseSuppression, echoCancellation = _ref25.echoCancellation, channelCount = _ref25.channelCount, sampleRate = _ref25.sampleRate, forcePCMU = _ref25.forcePCMU, forcePCMA = _ref25.forcePCMA;
+              _ref28 = _args24.length > 0 && _args24[0] !== undefined ? _args24[0] : {}, _ref28$deviceId = _ref28.deviceId, deviceId = _ref28$deviceId === void 0 ? null : _ref28$deviceId, autoGainControl = _ref28.autoGainControl, noiseSuppression = _ref28.noiseSuppression, echoCancellation = _ref28.echoCancellation, channelCount = _ref28.channelCount, sampleRate = _ref28.sampleRate, forcePCMU = _ref28.forcePCMU, forcePCMA = _ref28.forcePCMA;
               logger.debug("enableMic()");
               if (this.data.inputParams.produce) {
-                _context23.next = 7;
+                _context24.next = 7;
                 break;
               }
               logger.debug("Produce status is set to false!");
-              return _context23.abrupt("return", {
+              return _context24.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID007",
@@ -1960,11 +2102,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 7:
               if (!(this._roomStatus !== 'connected')) {
-                _context23.next = 12;
+                _context24.next = 12;
                 break;
               }
               logger.debug("Room status is not connected yet!");
-              return _context23.abrupt("return", {
+              return _context24.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID008",
@@ -1973,11 +2115,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 12:
               if (!this._micProducer) {
-                _context23.next = 17;
+                _context24.next = 17;
                 break;
               }
               logger.debug("Mic is already active!");
-              return _context23.abrupt("return", {
+              return _context24.abrupt("return", {
                 success: false,
                 warning: true,
                 code: "RWID002",
@@ -1985,11 +2127,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 17:
               if (this._device.canProduce("audio")) {
-                _context23.next = 20;
+                _context24.next = 20;
                 break;
               }
               logger.error("enableMic() | cannot produce audio");
-              return _context23.abrupt("return", {
+              return _context24.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID009",
@@ -2024,9 +2166,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 // logger.warn("sampleRate should be a number between 1 to 2, default value is 1, which is a mono audio.");
                 this.data.inputParams.channelCount = channelCount;
               }
-              _context23.prev = 27;
+              _context24.prev = 27;
               if (this._externalVideo) {
-                _context23.next = 48;
+                _context24.next = 48;
                 break;
               }
               if (deviceId) {
@@ -2046,11 +2188,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
 
               // const { resolution } = this._webcam;
               if (device) {
-                _context23.next = 34;
+                _context24.next = 34;
                 break;
               }
               logger.error("No mic device found! Can't start audio!");
-              return _context23.abrupt("return", {
+              return _context24.abrupt("return", {
                 success: false,
                 reason: "No mic available for starting audio!"
               });
@@ -2059,8 +2201,8 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 this.data.inputParams.audioDeviceId = deviceId;
               }
               logger.debug("enableMic() | calling getUserMedia()");
-              _context23.prev = 36;
-              _context23.next = 39;
+              _context24.prev = 36;
+              _context24.next = 39;
               return navigator.mediaDevices.getUserMedia({
                 audio: {
                   deviceId: {
@@ -2074,25 +2216,25 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 }
               });
             case 39:
-              this._micStream = _context23.sent;
+              this._micStream = _context24.sent;
               track = this._micStream.getAudioTracks()[0];
-              _context23.next = 46;
+              _context24.next = 46;
               break;
             case 43:
-              _context23.prev = 43;
-              _context23.t0 = _context23["catch"](36);
-              throw new Error("Error while acquiring mic. Possible issue with audio constraint values", _context23.t0);
+              _context24.prev = 43;
+              _context24.t0 = _context24["catch"](36);
+              throw new Error("Error while acquiring mic. Possible issue with audio constraint values", _context24.t0);
             case 46:
-              _context23.next = 52;
+              _context24.next = 52;
               break;
             case 48:
-              _context23.next = 50;
+              _context24.next = 50;
               return this._getExternalVideoStream();
             case 50:
-              this._micStream = _context23.sent;
+              this._micStream = _context24.sent;
               track = this._micStream.getAudioTracks()[0].clone();
             case 52:
-              _context23.next = 54;
+              _context24.next = 54;
               return this._sendTransport.produce({
                 track: track,
                 codecOptions: this.data.inputParams.forcePCMU || this.data.inputParams.forcePCMA ? undefined : {
@@ -2114,7 +2256,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 // 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
               });
             case 54:
-              this._micProducer = _context23.sent;
+              this._micProducer = _context24.sent;
               // if (this._e2eKey && e2e.isSupported()) {
               //   e2e.setupSenderTransform(this._micProducer.rtpSender);
               // }
@@ -2137,12 +2279,12 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._micProducer.on("trackended", function () {
                 _this5.disableMic()["catch"](function () {});
               });
-              _context23.next = 66;
+              _context24.next = 66;
               break;
             case 61:
-              _context23.prev = 61;
-              _context23.t1 = _context23["catch"](27);
-              logger.error("enableMic() | failed:%o", _context23.t1);
+              _context24.prev = 61;
+              _context24.t1 = _context24["catch"](27);
+              logger.error("enableMic() | failed:%o", _context24.t1);
               this.emit("error", {
                 code: "EID002",
                 text: "Error enabling microphone!"
@@ -2150,9 +2292,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               if (track) track.stop();
             case 66:
             case "end":
-              return _context23.stop();
+              return _context24.stop();
           }
-        }, _callee23, this, [[27, 61], [36, 43]]);
+        }, _callee24, this, [[27, 61], [36, 43]]);
       }));
       function enableMic() {
         return _enableMic.apply(this, arguments);
@@ -2162,20 +2304,20 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "disableMic",
     value: function () {
-      var _disableMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee24() {
+      var _disableMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee25() {
         var message;
-        return _regenerator["default"].wrap(function _callee24$(_context24) {
-          while (1) switch (_context24.prev = _context24.next) {
+        return _regenerator["default"].wrap(function _callee25$(_context25) {
+          while (1) switch (_context25.prev = _context25.next) {
             case 0:
               logger.debug("disableMic()");
               if (this._micStream) this._micStream.getAudioTracks().forEach(function (track) {
                 return track.stop();
               });
               if (this._micProducer) {
-                _context24.next = 4;
+                _context25.next = 4;
                 break;
               }
-              return _context24.abrupt("return");
+              return _context25.abrupt("return");
             case 4:
               this._micProducer.close();
               this._producers["delete"]("audio");
@@ -2205,9 +2347,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._micProducer = null;
             case 8:
             case "end":
-              return _context24.stop();
+              return _context25.stop();
           }
-        }, _callee24, this);
+        }, _callee25, this);
       }));
       function disableMic() {
         return _disableMic.apply(this, arguments);
@@ -2217,10 +2359,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "muteMic",
     value: function () {
-      var _muteMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee25() {
+      var _muteMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee26() {
         var message;
-        return _regenerator["default"].wrap(function _callee25$(_context25) {
-          while (1) switch (_context25.prev = _context25.next) {
+        return _regenerator["default"].wrap(function _callee26$(_context26) {
+          while (1) switch (_context26.prev = _context26.next) {
             case 0:
               logger.debug("muteMic()");
               this._micProducer.pause();
@@ -2250,9 +2392,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               }
             case 3:
             case "end":
-              return _context25.stop();
+              return _context26.stop();
           }
-        }, _callee25, this);
+        }, _callee26, this);
       }));
       function muteMic() {
         return _muteMic.apply(this, arguments);
@@ -2262,10 +2404,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "unmuteMic",
     value: function () {
-      var _unmuteMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee26() {
+      var _unmuteMic = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee27() {
         var message;
-        return _regenerator["default"].wrap(function _callee26$(_context26) {
-          while (1) switch (_context26.prev = _context26.next) {
+        return _regenerator["default"].wrap(function _callee27$(_context27) {
+          while (1) switch (_context27.prev = _context27.next) {
             case 0:
               logger.debug("unmuteMic()");
               this._micProducer.resume();
@@ -2292,9 +2434,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               }
             case 3:
             case "end":
-              return _context26.stop();
+              return _context27.stop();
           }
-        }, _callee26, this);
+        }, _callee27, this);
       }));
       function unmuteMic() {
         return _unmuteMic.apply(this, arguments);
@@ -2304,10 +2446,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "enableCam",
     value: function () {
-      var _enableCam = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee27() {
+      var _enableCam = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee28() {
         var _this6 = this;
-        var _ref26,
-          _ref26$deviceId,
+        var _ref29,
+          _ref29$deviceId,
           deviceId,
           videoResolution,
           forceVp8,
@@ -2325,18 +2467,18 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           codec,
           codecOptions,
           firstVideoCodec,
-          _args27 = arguments;
-        return _regenerator["default"].wrap(function _callee27$(_context27) {
-          while (1) switch (_context27.prev = _context27.next) {
+          _args28 = arguments;
+        return _regenerator["default"].wrap(function _callee28$(_context28) {
+          while (1) switch (_context28.prev = _context28.next) {
             case 0:
-              _ref26 = _args27.length > 0 && _args27[0] !== undefined ? _args27[0] : {}, _ref26$deviceId = _ref26.deviceId, deviceId = _ref26$deviceId === void 0 ? null : _ref26$deviceId, videoResolution = _ref26.videoResolution, forceVp8 = _ref26.forceVp8, forceVp9 = _ref26.forceVp9, forceH264 = _ref26.forceH264, h264Profile = _ref26.h264Profile, forceFPS = _ref26.forceFPS, enableWebcamLayers = _ref26.enableWebcamLayers, numSimulcastStreams = _ref26.numSimulcastStreams, videoBitRates = _ref26.videoBitRates;
+              _ref29 = _args28.length > 0 && _args28[0] !== undefined ? _args28[0] : {}, _ref29$deviceId = _ref29.deviceId, deviceId = _ref29$deviceId === void 0 ? null : _ref29$deviceId, videoResolution = _ref29.videoResolution, forceVp8 = _ref29.forceVp8, forceVp9 = _ref29.forceVp9, forceH264 = _ref29.forceH264, h264Profile = _ref29.h264Profile, forceFPS = _ref29.forceFPS, enableWebcamLayers = _ref29.enableWebcamLayers, numSimulcastStreams = _ref29.numSimulcastStreams, videoBitRates = _ref29.videoBitRates;
               logger.debug("enableWebcam()");
               if (this.data.inputParams.produce) {
-                _context27.next = 7;
+                _context28.next = 7;
                 break;
               }
               logger.debug("Produce status is set to false!");
-              return _context27.abrupt("return", {
+              return _context28.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID004",
@@ -2344,11 +2486,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 7:
               if (!(this._roomStatus !== 'connected')) {
-                _context27.next = 10;
+                _context28.next = 10;
                 break;
               }
               logger.debug("Room status is not connected yet!");
-              return _context27.abrupt("return", {
+              return _context28.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID005",
@@ -2357,11 +2499,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 10:
               if (!this._webcamProducer) {
-                _context27.next = 13;
+                _context28.next = 13;
                 break;
               }
               logger.debug("Camera is already active!");
-              return _context27.abrupt("return", {
+              return _context28.abrupt("return", {
                 success: false,
                 warning: true,
                 code: "RWID003",
@@ -2369,11 +2511,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 13:
               if (this._device.canProduce("video")) {
-                _context27.next = 16;
+                _context28.next = 16;
                 break;
               }
               logger.error("enableWebcam() | cannot produce video");
-              return _context27.abrupt("return", {
+              return _context28.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID006",
@@ -2424,9 +2566,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 logger.warn("videobitrates values should be an integer array with maximum 3 elements and minimum 1 element. The values in the array are '[700,250,75]'");
                 // videoBitRates = [700,250,75];
               }
-              _context27.prev = 25;
+              _context28.prev = 25;
               if (this._externalVideo) {
-                _context27.next = 41;
+                _context28.next = 41;
                 break;
               }
               // await this._updateWebcams();
@@ -2446,11 +2588,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._webcam.device = device;
               resolution = this._webcam.resolution;
               if (device) {
-                _context27.next = 33;
+                _context28.next = 33;
                 break;
               }
               logger.error("No wencam device found! Can't start video!");
-              return _context27.abrupt("return", {
+              return _context28.abrupt("return", {
                 success: false,
                 reason: "No Webcam available for starting video!"
               });
@@ -2459,7 +2601,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 this.data.inputParams.videoDeviceId = deviceId;
               }
               logger.debug("enableWebcam() | calling getUserMedia()");
-              _context27.next = 37;
+              _context28.next = 37;
               return navigator.mediaDevices.getUserMedia({
                 video: _objectSpread(_objectSpread({
                   deviceId: {
@@ -2472,18 +2614,18 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 })
               });
             case 37:
-              this._webCamStream = _context27.sent;
+              this._webCamStream = _context28.sent;
               track = this._webCamStream.getVideoTracks()[0];
-              _context27.next = 46;
+              _context28.next = 46;
               break;
             case 41:
               device = {
                 label: "external video"
               };
-              _context27.next = 44;
+              _context28.next = 44;
               return this._getExternalVideoStream();
             case 44:
-              this._webCamStream = _context27.sent;
+              this._webCamStream = _context28.sent;
               track = this._webCamStream.getVideoTracks()[0].clone();
             case 46:
               codecOptions = {
@@ -2491,23 +2633,23 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               };
               logger.debug("Current device codec options are:%O", this._device.rtpCapabilities.codecs);
               if (!this._forceVP8) {
-                _context27.next = 54;
+                _context28.next = 54;
                 break;
               }
               codec = this._device.rtpCapabilities.codecs.find(function (c) {
                 return c.mimeType.toLowerCase() === "video/vp8";
               });
               if (codec) {
-                _context27.next = 52;
+                _context28.next = 52;
                 break;
               }
               throw new Error("desired VP8 codec+configuration is not supported");
             case 52:
-              _context27.next = 67;
+              _context28.next = 67;
               break;
             case 54:
               if (!this._forceH264) {
-                _context27.next = 63;
+                _context28.next = 63;
                 break;
               }
               if (this.data.inputParams.h264Profile === "high") codec = this._device.rtpCapabilities.codecs.find(function (c) {
@@ -2516,25 +2658,25 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 return c.mimeType.toLowerCase() === "video/h264" && c.parameters["profile-level-id"] === "42e01f";
               });
               if (codec) {
-                _context27.next = 60;
+                _context28.next = 60;
                 break;
               }
               throw new Error("desired H264 codec+configuration is not supported");
             case 60:
               logger.debug("Selected h264 codec is:%O", codec);
             case 61:
-              _context27.next = 67;
+              _context28.next = 67;
               break;
             case 63:
               if (!this._forceVP9) {
-                _context27.next = 67;
+                _context28.next = 67;
                 break;
               }
               codec = this._device.rtpCapabilities.codecs.find(function (c) {
                 return c.mimeType.toLowerCase() === "video/vp9";
               });
               if (codec) {
-                _context27.next = 67;
+                _context28.next = 67;
                 break;
               }
               throw new Error("desired VP9 codec+configuration is not supported");
@@ -2573,7 +2715,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   }
                 }
               }
-              _context27.next = 70;
+              _context28.next = 70;
               return this._sendTransport.produce({
                 track: track,
                 encodings: encodings,
@@ -2584,7 +2726,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 }
               });
             case 70:
-              this._webcamProducer = _context27.sent;
+              this._webcamProducer = _context28.sent;
               this._producers.set("video", {
                 id: this._webcamProducer.id,
                 deviceLabel: device.label,
@@ -2610,12 +2752,12 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
 
                 _this6.disableCam()["catch"](function () {});
               });
-              _context27.next = 82;
+              _context28.next = 82;
               break;
             case 77:
-              _context27.prev = 77;
-              _context27.t0 = _context27["catch"](25);
-              logger.error("enableWebcam() | failed:%o", _context27.t0);
+              _context28.prev = 77;
+              _context28.t0 = _context28["catch"](25);
+              logger.error("enableWebcam() | failed:%o", _context28.t0);
               this.emit("error", {
                 code: "EID011",
                 text: "Enable Webcam failed!"
@@ -2623,9 +2765,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               if (track) track.stop();
             case 82:
             case "end":
-              return _context27.stop();
+              return _context28.stop();
           }
-        }, _callee27, this, [[25, 77]]);
+        }, _callee28, this, [[25, 77]]);
       }));
       function enableCam() {
         return _enableCam.apply(this, arguments);
@@ -2635,17 +2777,17 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "disableCam",
     value: function () {
-      var _disableCam = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee28() {
+      var _disableCam = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee29() {
         var message;
-        return _regenerator["default"].wrap(function _callee28$(_context28) {
-          while (1) switch (_context28.prev = _context28.next) {
+        return _regenerator["default"].wrap(function _callee29$(_context29) {
+          while (1) switch (_context29.prev = _context29.next) {
             case 0:
               logger.debug("disableWebcam()");
               if (this._webcamProducer) {
-                _context28.next = 3;
+                _context29.next = 3;
                 break;
               }
-              return _context28.abrupt("return");
+              return _context29.abrupt("return");
             case 3:
               this._webcamProducer.close();
               this._producers["delete"]("video");
@@ -2674,9 +2816,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._webcamProducer = null;
             case 7:
             case "end":
-              return _context28.stop();
+              return _context29.stop();
           }
-        }, _callee28, this);
+        }, _callee29, this);
       }));
       function disableCam() {
         return _disableCam.apply(this, arguments);
@@ -2686,50 +2828,50 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "_updateWebcams",
     value: function () {
-      var _updateWebcams2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee29() {
-        var devices, _iterator, _step, device, array, len, currentWebcamId;
-        return _regenerator["default"].wrap(function _callee29$(_context29) {
-          while (1) switch (_context29.prev = _context29.next) {
+      var _updateWebcams2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee30() {
+        var devices, _iterator2, _step2, device, array, len, currentWebcamId;
+        return _regenerator["default"].wrap(function _callee30$(_context30) {
+          while (1) switch (_context30.prev = _context30.next) {
             case 0:
               logger.debug("_updateWebcams()");
 
               // Reset the list.
               this._webcams = new Map();
               logger.debug("_updateWebcams() | calling enumerateDevices()");
-              _context29.next = 5;
+              _context30.next = 5;
               return navigator.mediaDevices.enumerateDevices();
             case 5:
-              devices = _context29.sent;
-              _iterator = _createForOfIteratorHelper(devices);
-              _context29.prev = 7;
-              _iterator.s();
+              devices = _context30.sent;
+              _iterator2 = _createForOfIteratorHelper(devices);
+              _context30.prev = 7;
+              _iterator2.s();
             case 9:
-              if ((_step = _iterator.n()).done) {
-                _context29.next = 16;
+              if ((_step2 = _iterator2.n()).done) {
+                _context30.next = 16;
                 break;
               }
-              device = _step.value;
+              device = _step2.value;
               if (!(device.kind !== "videoinput")) {
-                _context29.next = 13;
+                _context30.next = 13;
                 break;
               }
-              return _context29.abrupt("continue", 14);
+              return _context30.abrupt("continue", 14);
             case 13:
               this._webcams.set(device.deviceId, device);
             case 14:
-              _context29.next = 9;
+              _context30.next = 9;
               break;
             case 16:
-              _context29.next = 21;
+              _context30.next = 21;
               break;
             case 18:
-              _context29.prev = 18;
-              _context29.t0 = _context29["catch"](7);
-              _iterator.e(_context29.t0);
+              _context30.prev = 18;
+              _context30.t0 = _context30["catch"](7);
+              _iterator2.e(_context30.t0);
             case 21:
-              _context29.prev = 21;
-              _iterator.f();
-              return _context29.finish(21);
+              _context30.prev = 21;
+              _iterator2.f();
+              return _context30.finish(21);
             case 24:
               array = Array.from(this._webcams.values());
               len = array.length;
@@ -2738,9 +2880,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               if (len === 0) this._webcam.device = null;else if (!this._webcams.has(currentWebcamId)) this._webcam.device = array[0];
             case 29:
             case "end":
-              return _context29.stop();
+              return _context30.stop();
           }
-        }, _callee29, this, [[7, 18, 21, 24]]);
+        }, _callee30, this, [[7, 18, 21, 24]]);
       }));
       function _updateWebcams() {
         return _updateWebcams2.apply(this, arguments);
@@ -2750,50 +2892,50 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "_getExternalVideoStream",
     value: function () {
-      var _getExternalVideoStream2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee30() {
+      var _getExternalVideoStream2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee31() {
         var _this7 = this;
-        return _regenerator["default"].wrap(function _callee30$(_context30) {
-          while (1) switch (_context30.prev = _context30.next) {
+        return _regenerator["default"].wrap(function _callee31$(_context31) {
+          while (1) switch (_context31.prev = _context31.next) {
             case 0:
               if (!this._externalVideoStream) {
-                _context30.next = 2;
+                _context31.next = 2;
                 break;
               }
-              return _context30.abrupt("return", this._externalVideoStream);
+              return _context31.abrupt("return", this._externalVideoStream);
             case 2:
               if (!(this._externalVideo.readyState < 3)) {
-                _context30.next = 5;
+                _context31.next = 5;
                 break;
               }
-              _context30.next = 5;
+              _context31.next = 5;
               return new Promise(function (resolve) {
                 return _this7._externalVideo.addEventListener("canplay", resolve);
               });
             case 5:
               if (!this._externalVideo.captureStream) {
-                _context30.next = 9;
+                _context31.next = 9;
                 break;
               }
               this._externalVideoStream = this._externalVideo.captureStream();
-              _context30.next = 14;
+              _context31.next = 14;
               break;
             case 9:
               if (!this._externalVideo.mozCaptureStream) {
-                _context30.next = 13;
+                _context31.next = 13;
                 break;
               }
               this._externalVideoStream = this._externalVideo.mozCaptureStream();
-              _context30.next = 14;
+              _context31.next = 14;
               break;
             case 13:
               throw new Error("video.captureStream() not supported");
             case 14:
-              return _context30.abrupt("return", this._externalVideoStream);
+              return _context31.abrupt("return", this._externalVideoStream);
             case 15:
             case "end":
-              return _context30.stop();
+              return _context31.stop();
           }
-        }, _callee30, this);
+        }, _callee31, this);
       }));
       function _getExternalVideoStream() {
         return _getExternalVideoStream2.apply(this, arguments);
@@ -2814,36 +2956,36 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "changeVideoInput",
     value: function () {
-      var _changeVideoInput2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee31(_ref27) {
+      var _changeVideoInput2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee32(_ref30) {
         var resolution, deviceId, fps, response;
-        return _regenerator["default"].wrap(function _callee31$(_context31) {
-          while (1) switch (_context31.prev = _context31.next) {
+        return _regenerator["default"].wrap(function _callee32$(_context32) {
+          while (1) switch (_context32.prev = _context32.next) {
             case 0:
-              resolution = _ref27.resolution, deviceId = _ref27.deviceId, fps = _ref27.fps;
+              resolution = _ref30.resolution, deviceId = _ref30.deviceId, fps = _ref30.fps;
               if (!this._webcamProducer) {
-                _context31.next = 8;
+                _context32.next = 8;
                 break;
               }
-              _context31.next = 4;
+              _context32.next = 4;
               return this._changeVideoInput({
                 resolution: resolution,
                 deviceId: deviceId,
                 fps: fps
               });
             case 4:
-              response = _context31.sent;
-              return _context31.abrupt("return", response);
+              response = _context32.sent;
+              return _context32.abrupt("return", response);
             case 8:
               logger.error("No webcam producer available!");
-              return _context31.abrupt("return", {
+              return _context32.abrupt("return", {
                 success: false,
                 reason: "You are not sharing your camera yet. Camera Input can be changed to a new camera only when you are sharing an existing camera. "
               });
             case 10:
             case "end":
-              return _context31.stop();
+              return _context32.stop();
           }
-        }, _callee31, this);
+        }, _callee32, this);
       }));
       function changeVideoInput(_x15) {
         return _changeVideoInput2.apply(this, arguments);
@@ -2853,12 +2995,12 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "_changeVideoInput",
     value: function () {
-      var _changeVideoInput3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee32(_ref28) {
+      var _changeVideoInput3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee33(_ref31) {
         var resolution, deviceId, fps, device, track, producer;
-        return _regenerator["default"].wrap(function _callee32$(_context32) {
-          while (1) switch (_context32.prev = _context32.next) {
+        return _regenerator["default"].wrap(function _callee33$(_context33) {
+          while (1) switch (_context33.prev = _context33.next) {
             case 0:
-              resolution = _ref28.resolution, deviceId = _ref28.deviceId, fps = _ref28.fps;
+              resolution = _ref31.resolution, deviceId = _ref31.deviceId, fps = _ref31.fps;
               logger.info("_changeVideoInput() | Inside");
               if (resolution && ['hd', 'vga', 'qvga'].includes(resolution)) {
                 this._webcam.resolution = resolution;
@@ -2872,24 +3014,24 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 return deviceId && device.deviceId === deviceId;
               });
               if (device) {
-                _context32.next = 8;
+                _context33.next = 8;
                 break;
               }
               logger.error("The selected deviceId not found!");
-              return _context32.abrupt("return", {
+              return _context33.abrupt("return", {
                 success: false,
                 reason: "Invalid deviceId!"
               });
             case 8:
               ;
               this._webcam.device = device;
-              _context32.prev = 10;
+              _context33.prev = 10;
               this._webCamStream.getVideoTracks().forEach(function (track) {
                 return track.stop();
               });
               this._webCamStream = null;
               logger.debug("changeVideoInput() | calling getUserMedia()");
-              _context32.next = 16;
+              _context33.next = 16;
               return navigator.mediaDevices.getUserMedia({
                 video: _objectSpread(_objectSpread({
                   deviceId: {
@@ -2902,10 +3044,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 })
               });
             case 16:
-              this._webCamStream = _context32.sent;
+              this._webCamStream = _context33.sent;
               track = this._webCamStream.getVideoTracks()[0];
               logger.debug("The new video track is:%O", track);
-              _context32.next = 21;
+              _context33.next = 21;
               return this._webcamProducer.replaceTrack({
                 track: track
               });
@@ -2921,23 +3063,23 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 videoTrack: this._webcamProducer.track,
                 type: "local"
               });
-              return _context32.abrupt("return", {
+              return _context33.abrupt("return", {
                 success: true
               });
             case 31:
-              _context32.prev = 31;
-              _context32.t0 = _context32["catch"](10);
-              logger.error("Error while changing input:%O", _context32.t0);
-              return _context32.abrupt("return", {
+              _context33.prev = 31;
+              _context33.t0 = _context33["catch"](10);
+              logger.error("Error while changing input:%O", _context33.t0);
+              return _context33.abrupt("return", {
                 success: false,
                 reason: "Couldn't change video input",
-                error: _context32.t0
+                error: _context33.t0
               });
             case 35:
             case "end":
-              return _context32.stop();
+              return _context33.stop();
           }
-        }, _callee32, this, [[10, 31]]);
+        }, _callee33, this, [[10, 31]]);
       }));
       function _changeVideoInput(_x16) {
         return _changeVideoInput3.apply(this, arguments);
@@ -2947,17 +3089,17 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "changeAudioInput",
     value: function () {
-      var _changeAudioInput2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee33(_ref29) {
+      var _changeAudioInput2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee34(_ref32) {
         var autoGainControl, echoCancellation, noiseSuppression, sampleRate, channelCount, deviceId, response;
-        return _regenerator["default"].wrap(function _callee33$(_context33) {
-          while (1) switch (_context33.prev = _context33.next) {
+        return _regenerator["default"].wrap(function _callee34$(_context34) {
+          while (1) switch (_context34.prev = _context34.next) {
             case 0:
-              autoGainControl = _ref29.autoGainControl, echoCancellation = _ref29.echoCancellation, noiseSuppression = _ref29.noiseSuppression, sampleRate = _ref29.sampleRate, channelCount = _ref29.channelCount, deviceId = _ref29.deviceId;
+              autoGainControl = _ref32.autoGainControl, echoCancellation = _ref32.echoCancellation, noiseSuppression = _ref32.noiseSuppression, sampleRate = _ref32.sampleRate, channelCount = _ref32.channelCount, deviceId = _ref32.deviceId;
               if (!this._micProducer) {
-                _context33.next = 8;
+                _context34.next = 8;
                 break;
               }
-              _context33.next = 4;
+              _context34.next = 4;
               return this._changeAudioInput({
                 autoGainControl: autoGainControl,
                 echoCancellation: echoCancellation,
@@ -2967,18 +3109,18 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 deviceId: deviceId
               });
             case 4:
-              response = _context33.sent;
-              return _context33.abrupt("return", response);
+              response = _context34.sent;
+              return _context34.abrupt("return", response);
             case 8:
-              return _context33.abrupt("return", {
+              return _context34.abrupt("return", {
                 success: false,
                 reason: "You are not sharing your mic yet. Mic Input can be changed to a new mic only when you are sharing an existing mic. "
               });
             case 9:
             case "end":
-              return _context33.stop();
+              return _context34.stop();
           }
-        }, _callee33, this);
+        }, _callee34, this);
       }));
       function changeAudioInput(_x17) {
         return _changeAudioInput2.apply(this, arguments);
@@ -2988,12 +3130,12 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "_changeAudioInput",
     value: function () {
-      var _changeAudioInput3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee34(_ref30) {
+      var _changeAudioInput3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee35(_ref33) {
         var autoGainControl, echoCancellation, noiseSuppression, sampleRate, channelCount, deviceId, device, track, producer;
-        return _regenerator["default"].wrap(function _callee34$(_context34) {
-          while (1) switch (_context34.prev = _context34.next) {
+        return _regenerator["default"].wrap(function _callee35$(_context35) {
+          while (1) switch (_context35.prev = _context35.next) {
             case 0:
-              autoGainControl = _ref30.autoGainControl, echoCancellation = _ref30.echoCancellation, noiseSuppression = _ref30.noiseSuppression, sampleRate = _ref30.sampleRate, channelCount = _ref30.channelCount, deviceId = _ref30.deviceId;
+              autoGainControl = _ref33.autoGainControl, echoCancellation = _ref33.echoCancellation, noiseSuppression = _ref33.noiseSuppression, sampleRate = _ref33.sampleRate, channelCount = _ref33.channelCount, deviceId = _ref33.deviceId;
               if (autoGainControl && typeof autoGainControl === "boolean") {
                 this.data.inputParams.autoGainControl = autoGainControl;
 
@@ -3019,10 +3161,10 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 return deviceId && device.deviceId === deviceId;
               });
               if (device) {
-                _context34.next = 9;
+                _context35.next = 9;
                 break;
               }
-              return _context34.abrupt("return", {
+              return _context35.abrupt("return", {
                 success: false,
                 reason: "Invalid deviceId!"
               });
@@ -3033,8 +3175,8 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 return track.stop();
               });
               this._micStream = null;
-              _context34.prev = 13;
-              _context34.next = 16;
+              _context35.prev = 13;
+              _context35.next = 16;
               return navigator.mediaDevices.getUserMedia({
                 audio: {
                   deviceId: {
@@ -3048,7 +3190,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 }
               });
             case 16:
-              this._micStream = _context34.sent;
+              this._micStream = _context35.sent;
               track = this._micStream.getAudioTracks()[0];
               this._micProducer.replaceTrack({
                 track: track
@@ -3064,23 +3206,23 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 audioTrack: this._micProducer.track,
                 type: "local"
               });
-              return _context34.abrupt("return", {
+              return _context35.abrupt("return", {
                 success: true
               });
             case 28:
-              _context34.prev = 28;
-              _context34.t0 = _context34["catch"](13);
-              logger.error("Error while changing input:%O", _context34.t0);
-              return _context34.abrupt("return", {
+              _context35.prev = 28;
+              _context35.t0 = _context35["catch"](13);
+              logger.error("Error while changing input:%O", _context35.t0);
+              return _context35.abrupt("return", {
                 success: false,
                 reason: "Couldn't change audio input",
-                err: _context34.t0
+                err: _context35.t0
               });
             case 32:
             case "end":
-              return _context34.stop();
+              return _context35.stop();
           }
-        }, _callee34, this, [[13, 28]]);
+        }, _callee35, this, [[13, 28]]);
       }));
       function _changeAudioInput(_x18) {
         return _changeAudioInput3.apply(this, arguments);
@@ -3090,14 +3232,14 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "enableShare",
     value: function () {
-      var _enableShare = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee35() {
+      var _enableShare = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee36() {
         var _this8 = this;
-        var _ref31,
-          _ref31$shareAudio,
+        var _ref34,
+          _ref34$shareAudio,
           shareAudio,
-          _ref31$enableSharingL,
+          _ref34$enableSharingL,
           enableSharingLayers,
-          _ref31$shareBitRates,
+          _ref34$shareBitRates,
           shareBitRates,
           track,
           audioTrack,
@@ -3106,18 +3248,18 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           codec,
           codecOptions,
           firstVideoCodec,
-          _args35 = arguments;
-        return _regenerator["default"].wrap(function _callee35$(_context35) {
-          while (1) switch (_context35.prev = _context35.next) {
+          _args36 = arguments;
+        return _regenerator["default"].wrap(function _callee36$(_context36) {
+          while (1) switch (_context36.prev = _context36.next) {
             case 0:
-              _ref31 = _args35.length > 0 && _args35[0] !== undefined ? _args35[0] : {}, _ref31$shareAudio = _ref31.shareAudio, shareAudio = _ref31$shareAudio === void 0 ? false : _ref31$shareAudio, _ref31$enableSharingL = _ref31.enableSharingLayers, enableSharingLayers = _ref31$enableSharingL === void 0 ? true : _ref31$enableSharingL, _ref31$shareBitRates = _ref31.shareBitRates, shareBitRates = _ref31$shareBitRates === void 0 ? [2500, 1250, 500] : _ref31$shareBitRates;
+              _ref34 = _args36.length > 0 && _args36[0] !== undefined ? _args36[0] : {}, _ref34$shareAudio = _ref34.shareAudio, shareAudio = _ref34$shareAudio === void 0 ? false : _ref34$shareAudio, _ref34$enableSharingL = _ref34.enableSharingLayers, enableSharingLayers = _ref34$enableSharingL === void 0 ? true : _ref34$enableSharingL, _ref34$shareBitRates = _ref34.shareBitRates, shareBitRates = _ref34$shareBitRates === void 0 ? [2500, 1250, 500] : _ref34$shareBitRates;
               logger.debug("enableShare()");
               if (this.data.inputParams.produce) {
-                _context35.next = 7;
+                _context36.next = 7;
                 break;
               }
               logger.debug("Produce status is set to false!");
-              return _context35.abrupt("return", {
+              return _context36.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID003",
@@ -3125,11 +3267,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 7:
               if (!(this._roomStatus !== 'connected')) {
-                _context35.next = 12;
+                _context36.next = 12;
                 break;
               }
               logger.debug("Room status is not connected yet!");
-              return _context35.abrupt("return", {
+              return _context36.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID001",
@@ -3138,11 +3280,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 12:
               if (!this._shareProducer) {
-                _context35.next = 17;
+                _context36.next = 17;
                 break;
               }
               logger.debug("Screen share is already active!");
-              return _context35.abrupt("return", {
+              return _context36.abrupt("return", {
                 success: false,
                 warning: true,
                 code: "RWID001",
@@ -3150,11 +3292,11 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               });
             case 17:
               if (this._device.canProduce("video")) {
-                _context35.next = 20;
+                _context36.next = 20;
                 break;
               }
               logger.error("enableShare() | cannot produce video");
-              return _context35.abrupt("return", {
+              return _context36.abrupt("return", {
                 success: false,
                 error: true,
                 code: "REID002",
@@ -3165,9 +3307,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               if (Array.isArray(shareBitRates) && shareBitRates.length >= 1 && shareBitRates.length <= 3 && shareBitRates.every(function (i) {
                 return Number.isInteger(i) && i >= 500 && i <= 2500;
               })) this.data.inputParams.shareBitRates = shareBitRates;else this.data.inputParams.shareBitRates = [2500, 1250, 500];
-              _context35.prev = 22;
+              _context36.prev = 22;
               logger.debug("enableShare() | calling getDisplayMedia()");
-              _context35.next = 26;
+              _context36.next = 26;
               return navigator.mediaDevices.getDisplayMedia({
                 audio: shareAudio ? true : false,
                 video: {
@@ -3186,9 +3328,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 }
               });
             case 26:
-              stream = _context35.sent;
+              stream = _context36.sent;
               if (stream) {
-                _context35.next = 31;
+                _context36.next = 31;
                 break;
               }
               // store.dispatch(stateActions.setShareInProgress(true));
@@ -3197,14 +3339,14 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 code: "EID013",
                 text: "Error while trying to start screen share. Not able to capture screen!"
               });
-              return _context35.abrupt("return");
+              return _context36.abrupt("return");
             case 31:
               audioTrack = stream.getAudioTracks()[0];
               if (!audioTrack) {
-                _context35.next = 38;
+                _context36.next = 38;
                 break;
               }
-              _context35.next = 35;
+              _context36.next = 35;
               return this._sendTransport.produce({
                 track: audioTrack,
                 codecOptions: this.data.inputParams.forcePCMU ? undefined : {
@@ -3224,7 +3366,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 // 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
               });
             case 35:
-              this._shareAudioProducer = _context35.sent;
+              this._shareAudioProducer = _context36.sent;
               this._producers.set("ssAudio", {
                 id: this._shareAudioProducer.id,
                 // deviceLabel: device.label,
@@ -3245,23 +3387,23 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 videoGoogleStartBitrate: 1000
               };
               if (!this._forceVP8) {
-                _context35.next = 46;
+                _context36.next = 46;
                 break;
               }
               codec = this._device.rtpCapabilities.codecs.find(function (c) {
                 return c.mimeType.toLowerCase() === "video/vp8";
               });
               if (codec) {
-                _context35.next = 44;
+                _context36.next = 44;
                 break;
               }
               throw new Error("desired VP8 codec+configuration is not supported");
             case 44:
-              _context35.next = 59;
+              _context36.next = 59;
               break;
             case 46:
               if (!this._forceH264) {
-                _context35.next = 55;
+                _context36.next = 55;
                 break;
               }
               if (this.data.inputParams.h264Profile === "high") codec = this._device.rtpCapabilities.codecs.find(function (c) {
@@ -3270,25 +3412,25 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 return c.mimeType.toLowerCase() === "video/h264" && c.parameters["profile-level-id"] === "42e01f";
               });
               if (codec) {
-                _context35.next = 52;
+                _context36.next = 52;
                 break;
               }
               throw new Error("desired H264 codec+configuration is not supported");
             case 52:
               logger.debug("Selected h264 codec is:%O", codec);
             case 53:
-              _context35.next = 59;
+              _context36.next = 59;
               break;
             case 55:
               if (!this._forceVP9) {
-                _context35.next = 59;
+                _context36.next = 59;
                 break;
               }
               codec = this._device.rtpCapabilities.codecs.find(function (c) {
                 return c.mimeType.toLowerCase() === "video/vp9";
               });
               if (codec) {
-                _context35.next = 59;
+                _context36.next = 59;
                 break;
               }
               throw new Error("desired VP9 codec+configuration is not supported");
@@ -3331,7 +3473,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   }
                 }
               }
-              _context35.next = 62;
+              _context36.next = 62;
               return this._sendTransport.produce({
                 track: track,
                 encodings: encodings,
@@ -3342,7 +3484,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 }
               });
             case 62:
-              this._shareProducer = _context35.sent;
+              this._shareProducer = _context36.sent;
               this._producers.set("ssVideo", {
                 id: this._shareProducer.id,
                 // deviceLabel: device.label,
@@ -3363,24 +3505,24 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._shareProducer.on("trackended", function () {
                 _this8.disableShare()["catch"](function () {});
               });
-              _context35.next = 74;
+              _context36.next = 74;
               break;
             case 69:
-              _context35.prev = 69;
-              _context35.t0 = _context35["catch"](22);
-              logger.error("enableShare() | failed:%o", _context35.t0);
-              if (_context35.t0.name !== "NotAllowedError") {
+              _context36.prev = 69;
+              _context36.t0 = _context36["catch"](22);
+              logger.error("enableShare() | failed:%o", _context36.t0);
+              if (_context36.t0.name !== "NotAllowedError") {
                 this.emit("error", {
                   code: "EID014",
-                  text: "Error while trying to start screen share. Error is: ".concat(_context35.t0, "!")
+                  text: "Error while trying to start screen share. Error is: ".concat(_context36.t0, "!")
                 });
               }
               if (track) track.stop();
             case 74:
             case "end":
-              return _context35.stop();
+              return _context36.stop();
           }
-        }, _callee35, this, [[22, 69]]);
+        }, _callee36, this, [[22, 69]]);
       }));
       function enableShare() {
         return _enableShare.apply(this, arguments);
@@ -3390,14 +3532,14 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "disableShare",
     value: function () {
-      var _disableShare = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee36() {
+      var _disableShare = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee37() {
         var message, _message;
-        return _regenerator["default"].wrap(function _callee36$(_context36) {
-          while (1) switch (_context36.prev = _context36.next) {
+        return _regenerator["default"].wrap(function _callee37$(_context37) {
+          while (1) switch (_context37.prev = _context37.next) {
             case 0:
               logger.debug("disableShare()");
               if (this._shareProducer) {
-                _context36.next = 5;
+                _context37.next = 5;
                 break;
               }
               logger.warn("Screen share doesn't seem to be on!");
@@ -3405,7 +3547,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 code: "EID017",
                 text: "Error while trying to stop screen share. Is the screen share on!"
               });
-              return _context36.abrupt("return");
+              return _context37.abrupt("return");
             case 5:
               this._shareProducer.close();
               if (this._shareAudioProducer) {
@@ -3461,9 +3603,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               this._shareProducer = null;
             case 10:
             case "end":
-              return _context36.stop();
+              return _context37.stop();
           }
-        }, _callee36, this);
+        }, _callee37, this);
       }));
       function disableShare() {
         return _disableShare.apply(this, arguments);
@@ -3473,44 +3615,44 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }], [{
     key: "listDevices",
     value: function () {
-      var _listDevices = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee37() {
+      var _listDevices = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee38() {
         var res;
-        return _regenerator["default"].wrap(function _callee37$(_context37) {
-          while (1) switch (_context37.prev = _context37.next) {
+        return _regenerator["default"].wrap(function _callee38$(_context38) {
+          while (1) switch (_context38.prev = _context38.next) {
             case 0:
               if (!devicesList) {
-                _context37.next = 3;
+                _context38.next = 3;
                 break;
               }
               logger.info("Device list already exists:%O", devicesList);
-              return _context37.abrupt("return", {
+              return _context38.abrupt("return", {
                 success: true,
                 deviceList: devicesList
               });
             case 3:
-              _context37.next = 5;
+              _context38.next = 5;
               return (0, _chooseMedia.loadAllAvailableDevices)();
             case 5:
-              res = _context37.sent;
+              res = _context38.sent;
               if (!res.success) {
-                _context37.next = 11;
+                _context38.next = 11;
                 break;
               }
               devicesList = res.deviceList;
-              return _context37.abrupt("return", {
+              return _context38.abrupt("return", {
                 success: true,
                 deviceList: res.deviceList
               });
             case 11:
-              return _context37.abrupt("return", {
+              return _context38.abrupt("return", {
                 success: false,
                 reason: res.reason
               });
             case 12:
             case "end":
-              return _context37.stop();
+              return _context38.stop();
           }
-        }, _callee37);
+        }, _callee38);
       }));
       function listDevices() {
         return _listDevices.apply(this, arguments);
@@ -3520,81 +3662,81 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "joinRoom",
     value: function () {
-      var _joinRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee38() {
-        var _ref32,
+      var _joinRoom = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee39() {
+        var _ref35,
           sessionToken,
           roomId,
           peerId,
           peerName,
-          _ref32$produce,
+          _ref35$produce,
           produce,
-          _ref32$produceAudio,
+          _ref35$produceAudio,
           produceAudio,
-          _ref32$produceVideo,
+          _ref35$produceVideo,
           produceVideo,
-          _ref32$consume,
+          _ref35$consume,
           consume,
-          _ref32$videoResolutio,
+          _ref35$videoResolutio,
           videoResolution,
-          _ref32$forceVp,
+          _ref35$forceVp,
           forceVp8,
-          _ref32$forceVp2,
+          _ref35$forceVp2,
           forceVp9,
-          _ref32$forceH,
+          _ref35$forceH,
           forceH264,
-          _ref32$h264Profile,
+          _ref35$h264Profile,
           h264Profile,
-          _ref32$forcePCMU,
+          _ref35$forcePCMU,
           forcePCMU,
-          _ref32$forcePCMA,
+          _ref35$forcePCMA,
           forcePCMA,
-          _ref32$forceFPS,
+          _ref35$forceFPS,
           forceFPS,
-          _ref32$enableWebcamLa,
+          _ref35$enableWebcamLa,
           enableWebcamLayers,
-          _ref32$numSimulcastSt,
+          _ref35$numSimulcastSt,
           numSimulcastStreams,
-          _ref32$autoGainContro,
+          _ref35$autoGainContro,
           autoGainControl,
-          _ref32$echoCancellati,
+          _ref35$echoCancellati,
           echoCancellation,
-          _ref32$noiseSuppressi,
+          _ref35$noiseSuppressi,
           noiseSuppression,
-          _ref32$sampleRate,
+          _ref35$sampleRate,
           sampleRate,
-          _ref32$channelCount,
+          _ref35$channelCount,
           channelCount,
-          _ref32$videoBitRates,
+          _ref35$videoBitRates,
           videoBitRates,
-          _ref32$share,
+          _ref35$share,
           share,
-          _ref32$shareAudio,
+          _ref35$shareAudio,
           shareAudio,
-          _ref32$enableSharingL,
+          _ref35$enableSharingL,
           enableSharingLayers,
-          _ref32$shareBitRates,
+          _ref35$shareBitRates,
           shareBitRates,
-          _ref32$audioDeviceId,
+          _ref35$audioDeviceId,
           audioDeviceId,
-          _ref32$videoDeviceId,
+          _ref35$videoDeviceId,
           videoDeviceId,
-          _ref32$peerType,
+          _ref35$peerType,
           peerType,
-          _ref32$roomType,
+          _ref35$roomType,
           roomType,
-          _ref32$authentication,
+          _ref35$authentication,
           authenticationRequired,
-          _ref32$password,
+          _ref35$password,
           password,
           roomDisplayName,
           outputData,
-          _args38 = arguments;
-        return _regenerator["default"].wrap(function _callee38$(_context38) {
-          while (1) switch (_context38.prev = _context38.next) {
+          _args39 = arguments;
+        return _regenerator["default"].wrap(function _callee39$(_context39) {
+          while (1) switch (_context39.prev = _context39.next) {
             case 0:
-              _ref32 = _args38.length > 0 && _args38[0] !== undefined ? _args38[0] : {}, sessionToken = _ref32.sessionToken, roomId = _ref32.roomId, peerId = _ref32.peerId, peerName = _ref32.peerName, _ref32$produce = _ref32.produce, produce = _ref32$produce === void 0 ? true : _ref32$produce, _ref32$produceAudio = _ref32.produceAudio, produceAudio = _ref32$produceAudio === void 0 ? true : _ref32$produceAudio, _ref32$produceVideo = _ref32.produceVideo, produceVideo = _ref32$produceVideo === void 0 ? true : _ref32$produceVideo, _ref32$consume = _ref32.consume, consume = _ref32$consume === void 0 ? true : _ref32$consume, _ref32$videoResolutio = _ref32.videoResolution, videoResolution = _ref32$videoResolutio === void 0 ? "hd" : _ref32$videoResolutio, _ref32$forceVp = _ref32.forceVp8, forceVp8 = _ref32$forceVp === void 0 ? false : _ref32$forceVp, _ref32$forceVp2 = _ref32.forceVp9, forceVp9 = _ref32$forceVp2 === void 0 ? false : _ref32$forceVp2, _ref32$forceH = _ref32.forceH264, forceH264 = _ref32$forceH === void 0 ? false : _ref32$forceH, _ref32$h264Profile = _ref32.h264Profile, h264Profile = _ref32$h264Profile === void 0 ? "high" : _ref32$h264Profile, _ref32$forcePCMU = _ref32.forcePCMU, forcePCMU = _ref32$forcePCMU === void 0 ? false : _ref32$forcePCMU, _ref32$forcePCMA = _ref32.forcePCMA, forcePCMA = _ref32$forcePCMA === void 0 ? false : _ref32$forcePCMA, _ref32$forceFPS = _ref32.forceFPS, forceFPS = _ref32$forceFPS === void 0 ? 25 : _ref32$forceFPS, _ref32$enableWebcamLa = _ref32.enableWebcamLayers, enableWebcamLayers = _ref32$enableWebcamLa === void 0 ? true : _ref32$enableWebcamLa, _ref32$numSimulcastSt = _ref32.numSimulcastStreams, numSimulcastStreams = _ref32$numSimulcastSt === void 0 ? 3 : _ref32$numSimulcastSt, _ref32$autoGainContro = _ref32.autoGainControl, autoGainControl = _ref32$autoGainContro === void 0 ? true : _ref32$autoGainContro, _ref32$echoCancellati = _ref32.echoCancellation, echoCancellation = _ref32$echoCancellati === void 0 ? true : _ref32$echoCancellati, _ref32$noiseSuppressi = _ref32.noiseSuppression, noiseSuppression = _ref32$noiseSuppressi === void 0 ? true : _ref32$noiseSuppressi, _ref32$sampleRate = _ref32.sampleRate, sampleRate = _ref32$sampleRate === void 0 ? 44000 : _ref32$sampleRate, _ref32$channelCount = _ref32.channelCount, channelCount = _ref32$channelCount === void 0 ? 1 : _ref32$channelCount, _ref32$videoBitRates = _ref32.videoBitRates, videoBitRates = _ref32$videoBitRates === void 0 ? [700, 250, 75] : _ref32$videoBitRates, _ref32$share = _ref32.share, share = _ref32$share === void 0 ? false : _ref32$share, _ref32$shareAudio = _ref32.shareAudio, shareAudio = _ref32$shareAudio === void 0 ? false : _ref32$shareAudio, _ref32$enableSharingL = _ref32.enableSharingLayers, enableSharingLayers = _ref32$enableSharingL === void 0 ? true : _ref32$enableSharingL, _ref32$shareBitRates = _ref32.shareBitRates, shareBitRates = _ref32$shareBitRates === void 0 ? [2500, 1250, 500] : _ref32$shareBitRates, _ref32$audioDeviceId = _ref32.audioDeviceId, audioDeviceId = _ref32$audioDeviceId === void 0 ? null : _ref32$audioDeviceId, _ref32$videoDeviceId = _ref32.videoDeviceId, videoDeviceId = _ref32$videoDeviceId === void 0 ? null : _ref32$videoDeviceId, _ref32$peerType = _ref32.peerType, peerType = _ref32$peerType === void 0 ? 'participant' : _ref32$peerType, _ref32$roomType = _ref32.roomType, roomType = _ref32$roomType === void 0 ? _constants._security.roomType.CONFERENCING : _ref32$roomType, _ref32$authentication = _ref32.authenticationRequired, authenticationRequired = _ref32$authentication === void 0 ? false : _ref32$authentication, _ref32$password = _ref32.password, password = _ref32$password === void 0 ? null : _ref32$password, roomDisplayName = _ref32.roomDisplayName;
+              _ref35 = _args39.length > 0 && _args39[0] !== undefined ? _args39[0] : {}, sessionToken = _ref35.sessionToken, roomId = _ref35.roomId, peerId = _ref35.peerId, peerName = _ref35.peerName, _ref35$produce = _ref35.produce, produce = _ref35$produce === void 0 ? true : _ref35$produce, _ref35$produceAudio = _ref35.produceAudio, produceAudio = _ref35$produceAudio === void 0 ? true : _ref35$produceAudio, _ref35$produceVideo = _ref35.produceVideo, produceVideo = _ref35$produceVideo === void 0 ? true : _ref35$produceVideo, _ref35$consume = _ref35.consume, consume = _ref35$consume === void 0 ? true : _ref35$consume, _ref35$videoResolutio = _ref35.videoResolution, videoResolution = _ref35$videoResolutio === void 0 ? "hd" : _ref35$videoResolutio, _ref35$forceVp = _ref35.forceVp8, forceVp8 = _ref35$forceVp === void 0 ? false : _ref35$forceVp, _ref35$forceVp2 = _ref35.forceVp9, forceVp9 = _ref35$forceVp2 === void 0 ? false : _ref35$forceVp2, _ref35$forceH = _ref35.forceH264, forceH264 = _ref35$forceH === void 0 ? false : _ref35$forceH, _ref35$h264Profile = _ref35.h264Profile, h264Profile = _ref35$h264Profile === void 0 ? "high" : _ref35$h264Profile, _ref35$forcePCMU = _ref35.forcePCMU, forcePCMU = _ref35$forcePCMU === void 0 ? false : _ref35$forcePCMU, _ref35$forcePCMA = _ref35.forcePCMA, forcePCMA = _ref35$forcePCMA === void 0 ? false : _ref35$forcePCMA, _ref35$forceFPS = _ref35.forceFPS, forceFPS = _ref35$forceFPS === void 0 ? 25 : _ref35$forceFPS, _ref35$enableWebcamLa = _ref35.enableWebcamLayers, enableWebcamLayers = _ref35$enableWebcamLa === void 0 ? true : _ref35$enableWebcamLa, _ref35$numSimulcastSt = _ref35.numSimulcastStreams, numSimulcastStreams = _ref35$numSimulcastSt === void 0 ? 3 : _ref35$numSimulcastSt, _ref35$autoGainContro = _ref35.autoGainControl, autoGainControl = _ref35$autoGainContro === void 0 ? true : _ref35$autoGainContro, _ref35$echoCancellati = _ref35.echoCancellation, echoCancellation = _ref35$echoCancellati === void 0 ? true : _ref35$echoCancellati, _ref35$noiseSuppressi = _ref35.noiseSuppression, noiseSuppression = _ref35$noiseSuppressi === void 0 ? true : _ref35$noiseSuppressi, _ref35$sampleRate = _ref35.sampleRate, sampleRate = _ref35$sampleRate === void 0 ? 44000 : _ref35$sampleRate, _ref35$channelCount = _ref35.channelCount, channelCount = _ref35$channelCount === void 0 ? 1 : _ref35$channelCount, _ref35$videoBitRates = _ref35.videoBitRates, videoBitRates = _ref35$videoBitRates === void 0 ? [700, 250, 75] : _ref35$videoBitRates, _ref35$share = _ref35.share, share = _ref35$share === void 0 ? false : _ref35$share, _ref35$shareAudio = _ref35.shareAudio, shareAudio = _ref35$shareAudio === void 0 ? false : _ref35$shareAudio, _ref35$enableSharingL = _ref35.enableSharingLayers, enableSharingLayers = _ref35$enableSharingL === void 0 ? true : _ref35$enableSharingL, _ref35$shareBitRates = _ref35.shareBitRates, shareBitRates = _ref35$shareBitRates === void 0 ? [2500, 1250, 500] : _ref35$shareBitRates, _ref35$audioDeviceId = _ref35.audioDeviceId, audioDeviceId = _ref35$audioDeviceId === void 0 ? null : _ref35$audioDeviceId, _ref35$videoDeviceId = _ref35.videoDeviceId, videoDeviceId = _ref35$videoDeviceId === void 0 ? null : _ref35$videoDeviceId, _ref35$peerType = _ref35.peerType, peerType = _ref35$peerType === void 0 ? 'participant' : _ref35$peerType, _ref35$roomType = _ref35.roomType, roomType = _ref35$roomType === void 0 ? _constants._security.roomType.CONFERENCING : _ref35$roomType, _ref35$authentication = _ref35.authenticationRequired, authenticationRequired = _ref35$authentication === void 0 ? false : _ref35$authentication, _ref35$password = _ref35.password, password = _ref35$password === void 0 ? null : _ref35$password, roomDisplayName = _ref35.roomDisplayName;
               if (sessionToken) {
-                _context38.next = 3;
+                _context39.next = 3;
                 break;
               }
               throw new Error("Session token is required to join the room.");
@@ -3709,7 +3851,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 peerType = 'participant';
                 logger.debug("peerType is invalid:%s. By default set to: participant", peerType);
               }
-              _context38.prev = 28;
+              _context39.prev = 28;
               logger.info("session token:%s", sessionToken);
               if (!peerId) peerId = (0, _uuidv.uuidv4)();
               if (!roomId) roomId = (0, _getRandomInt.getRandomInt)();
@@ -3743,7 +3885,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               //   return res;
               // }
               // logger.debug("VidScale url is:", outputData.url);
-              return _context38.abrupt("return", new JsSdk({
+              return _context39.abrupt("return", new JsSdk({
                 sessionToken: sessionToken,
                 peerId: peerId,
                 roomId: roomId,
@@ -3782,15 +3924,15 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 roomDisplayName: roomDisplayName
               }));
             case 37:
-              _context38.prev = 37;
-              _context38.t0 = _context38["catch"](28);
-              logger.error("Failed to join room:", _context38.t0.message);
-              throw _context38.t0;
+              _context39.prev = 37;
+              _context39.t0 = _context39["catch"](28);
+              logger.error("Failed to join room:", _context39.t0.message);
+              throw _context39.t0;
             case 41:
             case "end":
-              return _context38.stop();
+              return _context39.stop();
           }
-        }, _callee38, null, [[28, 37]]);
+        }, _callee39, null, [[28, 37]]);
       }));
       function joinRoom() {
         return _joinRoom.apply(this, arguments);
@@ -3800,7 +3942,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
   }]);
 }(_events.EventEmitter); // export default VidScale;
 
-},{"./Logger":4,"./socket":5,"./utils/chooseMedia":12,"./utils/constants":13,"./utils/getRandomInt":14,"./utils/getUSerMediaConstraints":15,"./utils/getVidScaleUrl":16,"./utils/queue":17,"./utils/randomName":18,"./utils/sleep":19,"./utils/uuidv4":20,"./utils/verifyOutputQualites":21,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/defineProperty":26,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/objectWithoutProperties":30,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/helpers/typeof":37,"@babel/runtime/regenerator":38,"bowser":44,"events":45,"mediasoup-client":103}],3:[function(require,module,exports){
+},{"./Logger":4,"./socket":5,"./utils/chooseMedia":12,"./utils/constants":13,"./utils/getRandomInt":14,"./utils/getUSerMediaConstraints":15,"./utils/getVidScaleUrl":16,"./utils/queue":17,"./utils/randomName":18,"./utils/sleep":19,"./utils/uuidv4":20,"./utils/verifyOutputQualites":21,"./utils/verifyfileTypes":22,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/defineProperty":27,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/objectWithoutProperties":31,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/helpers/typeof":38,"@babel/runtime/regenerator":39,"bowser":45,"events":46,"mediasoup-client":104}],3:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -6884,7 +7026,7 @@ var JsSdk_v1 = exports.JsSdk_v1 = /*#__PURE__*/function (_EventEmitter) {
   }]);
 }(_events.EventEmitter); // export default VidScale;
 
-},{"./Logger":4,"./socket":5,"./utils/chooseMedia":12,"./utils/constants":13,"./utils/getRandomInt":14,"./utils/getVidScaleUrl":16,"./utils/randomName":18,"./utils/uuidv4":20,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/defineProperty":26,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/helpers/typeof":37,"@babel/runtime/regenerator":38,"bowser":44,"events":45,"mediasoup-client":103}],4:[function(require,module,exports){
+},{"./Logger":4,"./socket":5,"./utils/chooseMedia":12,"./utils/constants":13,"./utils/getRandomInt":14,"./utils/getVidScaleUrl":16,"./utils/randomName":18,"./utils/uuidv4":20,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/defineProperty":27,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/helpers/typeof":38,"@babel/runtime/regenerator":39,"bowser":45,"events":46,"mediasoup-client":104}],4:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -6935,7 +7077,7 @@ var Logger = /*#__PURE__*/function () {
 }();
 module.exports = Logger;
 
-},{"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/interopRequireDefault":29,"debug":47}],5:[function(require,module,exports){
+},{"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/interopRequireDefault":30,"debug":48}],5:[function(require,module,exports){
 "use strict";
 
 var Peer = require("./lib/Peer");
@@ -7034,7 +7176,7 @@ var EnhancedEventEmitter = /*#__PURE__*/function (_EventEmitter) {
 }(EventEmitter);
 module.exports = EnhancedEventEmitter;
 
-},{"../../Logger":4,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38,"events":45}],7:[function(require,module,exports){
+},{"../../Logger":4,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39,"events":46}],7:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -7166,7 +7308,7 @@ var Message = /*#__PURE__*/function () {
 }();
 module.exports = Message;
 
-},{"../../Logger":4,"./utils":11,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/typeof":37}],8:[function(require,module,exports){
+},{"../../Logger":4,"./utils":11,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/typeof":38}],8:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -7503,7 +7645,7 @@ var Peer = /*#__PURE__*/function (_EnhancedEventEmitter) {
 }(EnhancedEventEmitter);
 module.exports = Peer;
 
-},{"../../Logger":4,"./EnhancedEventEmitter":6,"./Message":7,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38}],9:[function(require,module,exports){
+},{"../../Logger":4,"./EnhancedEventEmitter":6,"./Message":7,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39}],9:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -7694,7 +7836,7 @@ var SocketTransport = /*#__PURE__*/function (_EnhancedEventEmitter) {
 }(EnhancedEventEmitter);
 module.exports = SocketTransport;
 
-},{"../../../Logger":4,"../EnhancedEventEmitter":6,"../Message":7,"../utils":11,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38,"socket.io-client":119}],10:[function(require,module,exports){
+},{"../../../Logger":4,"../EnhancedEventEmitter":6,"../Message":7,"../utils":11,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39,"socket.io-client":120}],10:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -8015,7 +8157,7 @@ var WebSocketTransport = /*#__PURE__*/function (_EnhancedEventEmitter) {
 }(EnhancedEventEmitter);
 module.exports = WebSocketTransport;
 
-},{"../../../Logger":4,"../EnhancedEventEmitter":6,"../utils":11,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/defineProperty":26,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38}],11:[function(require,module,exports){
+},{"../../../Logger":4,"../EnhancedEventEmitter":6,"../utils":11,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/defineProperty":27,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39}],11:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -8050,7 +8192,7 @@ exports.sleep = /*#__PURE__*/function () {
   };
 }();
 
-},{"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38}],12:[function(require,module,exports){
+},{"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39}],12:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -8519,13 +8661,13 @@ var loadAllAvailableDevices = exports.loadAllAvailableDevices = /*#__PURE__*/fun
   };
 }();
 
-},{"../Logger":4,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38}],13:[function(require,module,exports){
+},{"../Logger":4,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports._security = exports.USER_TYPE_REGULAR = exports.USER_TYPE_PRESENTER = exports.USER_TYPE_MODERATOR = exports.USER_TYPE_BOT = exports.USER_TYPE_ADMIN = exports.TOTAL_RECORDING_SPACE_AVAILABLE = exports.STREAM_TYPE_SCREEN_VIDEO = exports.STREAM_TYPE_SCREEN_AUDIO = exports.STREAM_TYPE_CAM_VIDEO = exports.STREAM_TYPE_CAM_AUDIO = exports.STAGE = exports.RTMPSTREAMANDRECORD = exports.RTMPSTREAM = exports.ROOM_STATUS_ENUM_OCUPIED = exports.ROOM_STATUS_ENUM_FREE = exports.ROOM_LEAVE_ONLY = exports.ROOM_LEAVE_AND_CLOSE = exports.ROOM_CLOSE_TYPE_CLIENT = exports.ROOMTYPE_P2P = exports.ROOMTYPE_EVENT = exports.ROOMTYPE_CONFERENCING = exports.RECORD = exports.PARTICIPANT = exports.MSG_TYPE_PUBLIC = exports.MSG_TYPE_PRIVATE = exports.MSG_SENDER_TYPE_VIEWER = exports.MSG_SENDER_TYPE_PRESENTER = exports.MSG_SENDER_TYPE_MODERATOR = exports.MSG_SENDER_TYPE_EVERYBODY = exports.MSG_DIRECTION_SEND = exports.MSG_DIRECTION_RECV = exports.MERGEA = exports.MERGE = exports.CLOUD_DO = exports.CLOUD_AWS = exports.BACK_STAGE = exports.AMERGEA = exports.AMERGE = void 0;
+exports._security = exports.USER_TYPE_REGULAR = exports.USER_TYPE_PRESENTER = exports.USER_TYPE_MODERATOR = exports.USER_TYPE_BOT = exports.USER_TYPE_ADMIN = exports.TOTAL_RECORDING_SPACE_AVAILABLE = exports.STREAM_TYPE_SCREEN_VIDEO = exports.STREAM_TYPE_SCREEN_AUDIO = exports.STREAM_TYPE_CAM_VIDEO = exports.STREAM_TYPE_CAM_AUDIO = exports.STAGE = exports.RTMPSTREAMANDRECORD = exports.RTMPSTREAM = exports.ROOM_STATUS_ENUM_OCUPIED = exports.ROOM_STATUS_ENUM_FREE = exports.ROOM_LEAVE_ONLY = exports.ROOM_LEAVE_AND_CLOSE = exports.ROOM_CLOSE_TYPE_CLIENT = exports.ROOMTYPE_P2P = exports.ROOMTYPE_EVENT = exports.ROOMTYPE_CONFERENCING = exports.RECORD = exports.PROCESS = exports.PARTICIPANT = exports.MSG_TYPE_PUBLIC = exports.MSG_TYPE_PRIVATE = exports.MSG_SENDER_TYPE_VIEWER = exports.MSG_SENDER_TYPE_PRESENTER = exports.MSG_SENDER_TYPE_MODERATOR = exports.MSG_SENDER_TYPE_EVERYBODY = exports.MSG_DIRECTION_SEND = exports.MSG_DIRECTION_RECV = exports.MERGEA = exports.MERGE = exports.CLOUD_DO = exports.CLOUD_AWS = exports.BACK_STAGE = exports.AMERGEA = exports.AMERGE = void 0;
 var _environment = "development" || "development";
 var _security = exports._security = {
   roomType: {
@@ -8577,6 +8719,7 @@ var BACK_STAGE = exports.BACK_STAGE = "Back-Stage";
 var RECORD = exports.RECORD = "record";
 var RTMPSTREAM = exports.RTMPSTREAM = "rtmpStream";
 var RTMPSTREAMANDRECORD = exports.RTMPSTREAMANDRECORD = "rtmpStreamAndRecord";
+var PROCESS = exports.PROCESS = "process";
 var MERGE = exports.MERGE = "mergedAV";
 var MERGEA = exports.MERGEA = 'mergedA';
 var AMERGE = exports.AMERGE = "AmergedAV";
@@ -8830,7 +8973,7 @@ var fetchAllocation = /*#__PURE__*/function () {
   };
 }();
 
-},{"../Logger":4,"./constants":13,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38,"axios/dist/browser/axios.cjs":42}],17:[function(require,module,exports){
+},{"../Logger":4,"./constants":13,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39,"axios/dist/browser/axios.cjs":43}],17:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -8863,7 +9006,7 @@ var SocketQueue = exports.SocketQueue = /*#__PURE__*/function () {
   }]);
 }();
 
-},{"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/interopRequireDefault":29}],18:[function(require,module,exports){
+},{"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/interopRequireDefault":30}],18:[function(require,module,exports){
 "use strict";
 
 var _typeof = require("@babel/runtime/helpers/typeof");
@@ -8913,7 +9056,7 @@ function detectLanguage() {
   // 	return 'en';
 }
 
-},{"@babel/runtime/helpers/typeof":37,"pokemon":111}],19:[function(require,module,exports){
+},{"@babel/runtime/helpers/typeof":38,"pokemon":112}],19:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -8946,7 +9089,7 @@ var sleep = exports.sleep = /*#__PURE__*/function () {
   };
 }();
 
-},{"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38}],20:[function(require,module,exports){
+},{"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8987,12 +9130,177 @@ function isValidOutputQualities(outputQualities) {
 }
 
 },{}],22:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.allowedTypes = void 0;
+exports.verifyFiles = verifyFiles;
+var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+// --- config: only these types are permitted ---
+var Logger = require("../Logger");
+var logger = new Logger("utils-verifyFiles");
+var allowedTypes = exports.allowedTypes = ['mp4'];
+
+/**
+ * Check that the URL’s file‐extension matches the expected type.
+ * @param {string} url – the full URL (may include query params)
+ * @param {string} expectedType – e.g. "mp4"
+ * @returns {boolean}
+ */
+function hasCorrectExtension(url, expectedType) {
+  try {
+    var pathname = new URL(url).pathname;
+    var ext = pathname.split('.').pop().toLowerCase();
+    return ext === expectedType.toLowerCase();
+  } catch (_unused) {
+    // invalid URL
+    return false;
+  }
+}
+
+/**
+ * Do a HEAD request and ensure the Content-Type header
+ * includes our expected subtype (e.g. "video/mp4").
+ * @param {string} url 
+ * @param {string} expectedType – e.g. "mp4"
+ * @returns {Promise<boolean>}
+ */
+function hasCorrectContentType(_x, _x2) {
+  return _hasCorrectContentType.apply(this, arguments);
+}
+/**
+ * Verify a map of file‐types ➔ URLs.
+ * Returns true only if **every** entry
+ * 1) is in allowedTypes,
+ * 2) has the right extension,
+ * 3) servers the right Content-Type.
+ * @param {{ type: string, url: string }[]} filesArr 
+ * @returns {Promise<boolean>}
+ */
+function _hasCorrectContentType() {
+  _hasCorrectContentType = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(url, expectedType) {
+    var res, ct;
+    return _regenerator["default"].wrap(function _callee$(_context) {
+      while (1) switch (_context.prev = _context.next) {
+        case 0:
+          _context.prev = 0;
+          _context.next = 3;
+          return fetch(url, {
+            method: 'HEAD'
+          });
+        case 3:
+          res = _context.sent;
+          if (res.ok) {
+            _context.next = 6;
+            break;
+          }
+          return _context.abrupt("return", false);
+        case 6:
+          ct = (res.headers.get('Content-Type') || '').toLowerCase();
+          return _context.abrupt("return", ct.includes("/".concat(expectedType.toLowerCase())));
+        case 10:
+          _context.prev = 10;
+          _context.t0 = _context["catch"](0);
+          return _context.abrupt("return", false);
+        case 13:
+        case "end":
+          return _context.stop();
+      }
+    }, _callee, null, [[0, 10]]);
+  }));
+  return _hasCorrectContentType.apply(this, arguments);
+}
+function verifyFiles(_x3) {
+  return _verifyFiles.apply(this, arguments);
+}
+function _verifyFiles() {
+  _verifyFiles = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(filesArr) {
+    var _iterator, _step, _step$value, type, url;
+    return _regenerator["default"].wrap(function _callee2$(_context2) {
+      while (1) switch (_context2.prev = _context2.next) {
+        case 0:
+          logger.info("The input files are:%o, length:%s", filesArr, filesArr.length);
+          if (!(filesArr.length > 0)) {
+            _context2.next = 28;
+            break;
+          }
+          logger.info("Files array length is:%s", filesArr.length);
+          _iterator = _createForOfIteratorHelper(filesArr);
+          _context2.prev = 4;
+          _iterator.s();
+        case 6:
+          if ((_step = _iterator.n()).done) {
+            _context2.next = 17;
+            break;
+          }
+          _step$value = _step.value, type = _step$value.type, url = _step$value.url;
+          logger.info("The file detais are type:%s, url:%s", type, url);
+          // 1) key must be allowed
+          if (allowedTypes.includes(type)) {
+            _context2.next = 12;
+            break;
+          }
+          console.warn("Type \"".concat(type, "\" is not allowed."));
+          return _context2.abrupt("return", {
+            success: false,
+            reason: "Type \"".concat(type, "\" is not allowed.")
+          });
+        case 12:
+          if (hasCorrectExtension(url, type)) {
+            _context2.next = 15;
+            break;
+          }
+          console.warn("Extension mismatch for ".concat(url, "; expected .").concat(type));
+          return _context2.abrupt("return", {
+            success: false,
+            reason: "Extension mismatch for ".concat(url, "; expected .").concat(type)
+          });
+        case 15:
+          _context2.next = 6;
+          break;
+        case 17:
+          _context2.next = 22;
+          break;
+        case 19:
+          _context2.prev = 19;
+          _context2.t0 = _context2["catch"](4);
+          _iterator.e(_context2.t0);
+        case 22:
+          _context2.prev = 22;
+          _iterator.f();
+          return _context2.finish(22);
+        case 25:
+          return _context2.abrupt("return", {
+            success: true
+          });
+        case 28:
+          return _context2.abrupt("return", {
+            success: false,
+            reason: "There are no files for processing!"
+          });
+        case 29:
+        case "end":
+          return _context2.stop();
+      }
+    }, _callee2, null, [[4, 19, 22, 25]]);
+  }));
+  return _verifyFiles.apply(this, arguments);
+}
+
+},{"../Logger":4,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39}],23:[function(require,module,exports){
 function _assertThisInitialized(e) {
   if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
   return e;
 }
 module.exports = _assertThisInitialized, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 function asyncGeneratorStep(n, t, e, r, o, a, c) {
   try {
     var i = n[a](c),
@@ -9019,12 +9327,12 @@ function _asyncToGenerator(n) {
   };
 }
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 function _classCallCheck(a, n) {
   if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 }
 module.exports = _classCallCheck, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var toPropertyKey = require("./toPropertyKey.js");
 function _defineProperties(e, r) {
   for (var t = 0; t < r.length; t++) {
@@ -9038,7 +9346,7 @@ function _createClass(e, r, t) {
   }), e;
 }
 module.exports = _createClass, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./toPropertyKey.js":36}],26:[function(require,module,exports){
+},{"./toPropertyKey.js":37}],27:[function(require,module,exports){
 var toPropertyKey = require("./toPropertyKey.js");
 function _defineProperty(e, r, t) {
   return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
@@ -9049,14 +9357,14 @@ function _defineProperty(e, r, t) {
   }) : e[r] = t, e;
 }
 module.exports = _defineProperty, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./toPropertyKey.js":36}],27:[function(require,module,exports){
+},{"./toPropertyKey.js":37}],28:[function(require,module,exports){
 function _getPrototypeOf(t) {
   return (module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
     return t.__proto__ || Object.getPrototypeOf(t);
   }, module.exports.__esModule = true, module.exports["default"] = module.exports), _getPrototypeOf(t);
 }
 module.exports = _getPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var setPrototypeOf = require("./setPrototypeOf.js");
 function _inherits(t, e) {
   if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
@@ -9071,14 +9379,14 @@ function _inherits(t, e) {
   }), e && setPrototypeOf(t, e);
 }
 module.exports = _inherits, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./setPrototypeOf.js":34}],29:[function(require,module,exports){
+},{"./setPrototypeOf.js":35}],30:[function(require,module,exports){
 function _interopRequireDefault(e) {
   return e && e.__esModule ? e : {
     "default": e
   };
 }
 module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var objectWithoutPropertiesLoose = require("./objectWithoutPropertiesLoose.js");
 function _objectWithoutProperties(e, t) {
   if (null == e) return {};
@@ -9092,7 +9400,7 @@ function _objectWithoutProperties(e, t) {
   return i;
 }
 module.exports = _objectWithoutProperties, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./objectWithoutPropertiesLoose.js":31}],31:[function(require,module,exports){
+},{"./objectWithoutPropertiesLoose.js":32}],32:[function(require,module,exports){
 function _objectWithoutPropertiesLoose(r, e) {
   if (null == r) return {};
   var t = {};
@@ -9103,7 +9411,7 @@ function _objectWithoutPropertiesLoose(r, e) {
   return t;
 }
 module.exports = _objectWithoutPropertiesLoose, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var _typeof = require("./typeof.js")["default"];
 var assertThisInitialized = require("./assertThisInitialized.js");
 function _possibleConstructorReturn(t, e) {
@@ -9112,7 +9420,7 @@ function _possibleConstructorReturn(t, e) {
   return assertThisInitialized(t);
 }
 module.exports = _possibleConstructorReturn, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./assertThisInitialized.js":22,"./typeof.js":37}],33:[function(require,module,exports){
+},{"./assertThisInitialized.js":23,"./typeof.js":38}],34:[function(require,module,exports){
 var _typeof = require("./typeof.js")["default"];
 function _regeneratorRuntime() {
   "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
@@ -9417,14 +9725,14 @@ function _regeneratorRuntime() {
   }, e;
 }
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./typeof.js":37}],34:[function(require,module,exports){
+},{"./typeof.js":38}],35:[function(require,module,exports){
 function _setPrototypeOf(t, e) {
   return (module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
     return t.__proto__ = e, t;
   }, module.exports.__esModule = true, module.exports["default"] = module.exports), _setPrototypeOf(t, e);
 }
 module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var _typeof = require("./typeof.js")["default"];
 function toPrimitive(t, r) {
   if ("object" != _typeof(t) || !t) return t;
@@ -9437,7 +9745,7 @@ function toPrimitive(t, r) {
   return ("string" === r ? String : Number)(t);
 }
 module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./typeof.js":37}],36:[function(require,module,exports){
+},{"./typeof.js":38}],37:[function(require,module,exports){
 var _typeof = require("./typeof.js")["default"];
 var toPrimitive = require("./toPrimitive.js");
 function toPropertyKey(t) {
@@ -9445,7 +9753,7 @@ function toPropertyKey(t) {
   return "symbol" == _typeof(i) ? i : i + "";
 }
 module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{"./toPrimitive.js":35,"./typeof.js":37}],37:[function(require,module,exports){
+},{"./toPrimitive.js":36,"./typeof.js":38}],38:[function(require,module,exports){
 function _typeof(o) {
   "@babel/helpers - typeof";
 
@@ -9456,7 +9764,7 @@ function _typeof(o) {
   }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
 }
 module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 // TODO(Babel 8): Remove this file.
 
 var runtime = require("../helpers/regeneratorRuntime")();
@@ -9473,7 +9781,7 @@ try {
   }
 }
 
-},{"../helpers/regeneratorRuntime":33}],39:[function(require,module,exports){
+},{"../helpers/regeneratorRuntime":34}],40:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -9651,7 +9959,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
@@ -9687,7 +9995,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":47}],41:[function(require,module,exports){
+},{"debug":48}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AwaitQueue = exports.AwaitQueueRemovedTaskError = exports.AwaitQueueStoppedError = void 0;
@@ -9871,7 +10179,7 @@ class AwaitQueue {
 }
 exports.AwaitQueue = AwaitQueue;
 
-},{"./Logger":40}],42:[function(require,module,exports){
+},{"./Logger":41}],43:[function(require,module,exports){
 (function (global,Buffer){(function (){
 // Axios v1.6.0 Copyright (c) 2023 Matt Zabriskie and contributors
 'use strict';
@@ -13112,7 +13420,7 @@ module.exports = axios;
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"buffer":46}],43:[function(require,module,exports){
+},{"buffer":47}],44:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -13264,9 +13572,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],44:[function(require,module,exports){
-!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.bowser=t():e.bowser=t()}(this,(function(){return function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=e,r.c=t,r.d=function(e,t,n){r.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.t=function(e,t){if(1&t&&(e=r(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var i in e)r.d(n,i,function(t){return e[t]}.bind(null,i));return n},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=90)}({17:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n=r(18),i=function(){function e(){}return e.getFirstMatch=function(e,t){var r=t.match(e);return r&&r.length>0&&r[1]||""},e.getSecondMatch=function(e,t){var r=t.match(e);return r&&r.length>1&&r[2]||""},e.matchAndReturnConst=function(e,t,r){if(e.test(t))return r},e.getWindowsVersionName=function(e){switch(e){case"NT":return"NT";case"XP":return"XP";case"NT 5.0":return"2000";case"NT 5.1":return"XP";case"NT 5.2":return"2003";case"NT 6.0":return"Vista";case"NT 6.1":return"7";case"NT 6.2":return"8";case"NT 6.3":return"8.1";case"NT 10.0":return"10";default:return}},e.getMacOSVersionName=function(e){var t=e.split(".").splice(0,2).map((function(e){return parseInt(e,10)||0}));if(t.push(0),10===t[0])switch(t[1]){case 5:return"Leopard";case 6:return"Snow Leopard";case 7:return"Lion";case 8:return"Mountain Lion";case 9:return"Mavericks";case 10:return"Yosemite";case 11:return"El Capitan";case 12:return"Sierra";case 13:return"High Sierra";case 14:return"Mojave";case 15:return"Catalina";default:return}},e.getAndroidVersionName=function(e){var t=e.split(".").splice(0,2).map((function(e){return parseInt(e,10)||0}));if(t.push(0),!(1===t[0]&&t[1]<5))return 1===t[0]&&t[1]<6?"Cupcake":1===t[0]&&t[1]>=6?"Donut":2===t[0]&&t[1]<2?"Eclair":2===t[0]&&2===t[1]?"Froyo":2===t[0]&&t[1]>2?"Gingerbread":3===t[0]?"Honeycomb":4===t[0]&&t[1]<1?"Ice Cream Sandwich":4===t[0]&&t[1]<4?"Jelly Bean":4===t[0]&&t[1]>=4?"KitKat":5===t[0]?"Lollipop":6===t[0]?"Marshmallow":7===t[0]?"Nougat":8===t[0]?"Oreo":9===t[0]?"Pie":void 0},e.getVersionPrecision=function(e){return e.split(".").length},e.compareVersions=function(t,r,n){void 0===n&&(n=!1);var i=e.getVersionPrecision(t),s=e.getVersionPrecision(r),a=Math.max(i,s),o=0,u=e.map([t,r],(function(t){var r=a-e.getVersionPrecision(t),n=t+new Array(r+1).join(".0");return e.map(n.split("."),(function(e){return new Array(20-e.length).join("0")+e})).reverse()}));for(n&&(o=a-Math.min(i,s)),a-=1;a>=o;){if(u[0][a]>u[1][a])return 1;if(u[0][a]===u[1][a]){if(a===o)return 0;a-=1}else if(u[0][a]<u[1][a])return-1}},e.map=function(e,t){var r,n=[];if(Array.prototype.map)return Array.prototype.map.call(e,t);for(r=0;r<e.length;r+=1)n.push(t(e[r]));return n},e.find=function(e,t){var r,n;if(Array.prototype.find)return Array.prototype.find.call(e,t);for(r=0,n=e.length;r<n;r+=1){var i=e[r];if(t(i,r))return i}},e.assign=function(e){for(var t,r,n=e,i=arguments.length,s=new Array(i>1?i-1:0),a=1;a<i;a++)s[a-1]=arguments[a];if(Object.assign)return Object.assign.apply(Object,[e].concat(s));var o=function(){var e=s[t];"object"==typeof e&&null!==e&&Object.keys(e).forEach((function(t){n[t]=e[t]}))};for(t=0,r=s.length;t<r;t+=1)o();return e},e.getBrowserAlias=function(e){return n.BROWSER_ALIASES_MAP[e]},e.getBrowserTypeByAlias=function(e){return n.BROWSER_MAP[e]||""},e}();t.default=i,e.exports=t.default},18:function(e,t,r){"use strict";t.__esModule=!0,t.ENGINE_MAP=t.OS_MAP=t.PLATFORMS_MAP=t.BROWSER_MAP=t.BROWSER_ALIASES_MAP=void 0;t.BROWSER_ALIASES_MAP={"Amazon Silk":"amazon_silk","Android Browser":"android",Bada:"bada",BlackBerry:"blackberry",Chrome:"chrome",Chromium:"chromium",Electron:"electron",Epiphany:"epiphany",Firefox:"firefox",Focus:"focus",Generic:"generic","Google Search":"google_search",Googlebot:"googlebot","Internet Explorer":"ie","K-Meleon":"k_meleon",Maxthon:"maxthon","Microsoft Edge":"edge","MZ Browser":"mz","NAVER Whale Browser":"naver",Opera:"opera","Opera Coast":"opera_coast",PhantomJS:"phantomjs",Puffin:"puffin",QupZilla:"qupzilla",QQ:"qq",QQLite:"qqlite",Safari:"safari",Sailfish:"sailfish","Samsung Internet for Android":"samsung_internet",SeaMonkey:"seamonkey",Sleipnir:"sleipnir",Swing:"swing",Tizen:"tizen","UC Browser":"uc",Vivaldi:"vivaldi","WebOS Browser":"webos",WeChat:"wechat","Yandex Browser":"yandex",Roku:"roku"};t.BROWSER_MAP={amazon_silk:"Amazon Silk",android:"Android Browser",bada:"Bada",blackberry:"BlackBerry",chrome:"Chrome",chromium:"Chromium",electron:"Electron",epiphany:"Epiphany",firefox:"Firefox",focus:"Focus",generic:"Generic",googlebot:"Googlebot",google_search:"Google Search",ie:"Internet Explorer",k_meleon:"K-Meleon",maxthon:"Maxthon",edge:"Microsoft Edge",mz:"MZ Browser",naver:"NAVER Whale Browser",opera:"Opera",opera_coast:"Opera Coast",phantomjs:"PhantomJS",puffin:"Puffin",qupzilla:"QupZilla",qq:"QQ Browser",qqlite:"QQ Browser Lite",safari:"Safari",sailfish:"Sailfish",samsung_internet:"Samsung Internet for Android",seamonkey:"SeaMonkey",sleipnir:"Sleipnir",swing:"Swing",tizen:"Tizen",uc:"UC Browser",vivaldi:"Vivaldi",webos:"WebOS Browser",wechat:"WeChat",yandex:"Yandex Browser"};t.PLATFORMS_MAP={tablet:"tablet",mobile:"mobile",desktop:"desktop",tv:"tv"};t.OS_MAP={WindowsPhone:"Windows Phone",Windows:"Windows",MacOS:"macOS",iOS:"iOS",Android:"Android",WebOS:"WebOS",BlackBerry:"BlackBerry",Bada:"Bada",Tizen:"Tizen",Linux:"Linux",ChromeOS:"Chrome OS",PlayStation4:"PlayStation 4",Roku:"Roku"};t.ENGINE_MAP={EdgeHTML:"EdgeHTML",Blink:"Blink",Trident:"Trident",Presto:"Presto",Gecko:"Gecko",WebKit:"WebKit"}},90:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(91))&&n.__esModule?n:{default:n},s=r(18);function a(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}var o=function(){function e(){}var t,r,n;return e.getParser=function(e,t){if(void 0===t&&(t=!1),"string"!=typeof e)throw new Error("UserAgent should be a string");return new i.default(e,t)},e.parse=function(e){return new i.default(e).getResult()},t=e,n=[{key:"BROWSER_MAP",get:function(){return s.BROWSER_MAP}},{key:"ENGINE_MAP",get:function(){return s.ENGINE_MAP}},{key:"OS_MAP",get:function(){return s.OS_MAP}},{key:"PLATFORMS_MAP",get:function(){return s.PLATFORMS_MAP}}],(r=null)&&a(t.prototype,r),n&&a(t,n),e}();t.default=o,e.exports=t.default},91:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n=u(r(92)),i=u(r(93)),s=u(r(94)),a=u(r(95)),o=u(r(17));function u(e){return e&&e.__esModule?e:{default:e}}var d=function(){function e(e,t){if(void 0===t&&(t=!1),null==e||""===e)throw new Error("UserAgent parameter can't be empty");this._ua=e,this.parsedResult={},!0!==t&&this.parse()}var t=e.prototype;return t.getUA=function(){return this._ua},t.test=function(e){return e.test(this._ua)},t.parseBrowser=function(){var e=this;this.parsedResult.browser={};var t=o.default.find(n.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.browser=t.describe(this.getUA())),this.parsedResult.browser},t.getBrowser=function(){return this.parsedResult.browser?this.parsedResult.browser:this.parseBrowser()},t.getBrowserName=function(e){return e?String(this.getBrowser().name).toLowerCase()||"":this.getBrowser().name||""},t.getBrowserVersion=function(){return this.getBrowser().version},t.getOS=function(){return this.parsedResult.os?this.parsedResult.os:this.parseOS()},t.parseOS=function(){var e=this;this.parsedResult.os={};var t=o.default.find(i.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.os=t.describe(this.getUA())),this.parsedResult.os},t.getOSName=function(e){var t=this.getOS().name;return e?String(t).toLowerCase()||"":t||""},t.getOSVersion=function(){return this.getOS().version},t.getPlatform=function(){return this.parsedResult.platform?this.parsedResult.platform:this.parsePlatform()},t.getPlatformType=function(e){void 0===e&&(e=!1);var t=this.getPlatform().type;return e?String(t).toLowerCase()||"":t||""},t.parsePlatform=function(){var e=this;this.parsedResult.platform={};var t=o.default.find(s.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.platform=t.describe(this.getUA())),this.parsedResult.platform},t.getEngine=function(){return this.parsedResult.engine?this.parsedResult.engine:this.parseEngine()},t.getEngineName=function(e){return e?String(this.getEngine().name).toLowerCase()||"":this.getEngine().name||""},t.parseEngine=function(){var e=this;this.parsedResult.engine={};var t=o.default.find(a.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.engine=t.describe(this.getUA())),this.parsedResult.engine},t.parse=function(){return this.parseBrowser(),this.parseOS(),this.parsePlatform(),this.parseEngine(),this},t.getResult=function(){return o.default.assign({},this.parsedResult)},t.satisfies=function(e){var t=this,r={},n=0,i={},s=0;if(Object.keys(e).forEach((function(t){var a=e[t];"string"==typeof a?(i[t]=a,s+=1):"object"==typeof a&&(r[t]=a,n+=1)})),n>0){var a=Object.keys(r),u=o.default.find(a,(function(e){return t.isOS(e)}));if(u){var d=this.satisfies(r[u]);if(void 0!==d)return d}var c=o.default.find(a,(function(e){return t.isPlatform(e)}));if(c){var f=this.satisfies(r[c]);if(void 0!==f)return f}}if(s>0){var l=Object.keys(i),h=o.default.find(l,(function(e){return t.isBrowser(e,!0)}));if(void 0!==h)return this.compareVersion(i[h])}},t.isBrowser=function(e,t){void 0===t&&(t=!1);var r=this.getBrowserName().toLowerCase(),n=e.toLowerCase(),i=o.default.getBrowserTypeByAlias(n);return t&&i&&(n=i.toLowerCase()),n===r},t.compareVersion=function(e){var t=[0],r=e,n=!1,i=this.getBrowserVersion();if("string"==typeof i)return">"===e[0]||"<"===e[0]?(r=e.substr(1),"="===e[1]?(n=!0,r=e.substr(2)):t=[],">"===e[0]?t.push(1):t.push(-1)):"="===e[0]?r=e.substr(1):"~"===e[0]&&(n=!0,r=e.substr(1)),t.indexOf(o.default.compareVersions(i,r,n))>-1},t.isOS=function(e){return this.getOSName(!0)===String(e).toLowerCase()},t.isPlatform=function(e){return this.getPlatformType(!0)===String(e).toLowerCase()},t.isEngine=function(e){return this.getEngineName(!0)===String(e).toLowerCase()},t.is=function(e,t){return void 0===t&&(t=!1),this.isBrowser(e,t)||this.isOS(e)||this.isPlatform(e)},t.some=function(e){var t=this;return void 0===e&&(e=[]),e.some((function(e){return t.is(e)}))},e}();t.default=d,e.exports=t.default},92:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n};var s=/version\/(\d+(\.?_?\d+)+)/i,a=[{test:[/googlebot/i],describe:function(e){var t={name:"Googlebot"},r=i.default.getFirstMatch(/googlebot\/(\d+(\.\d+))/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/opera/i],describe:function(e){var t={name:"Opera"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:opera)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/opr\/|opios/i],describe:function(e){var t={name:"Opera"},r=i.default.getFirstMatch(/(?:opr|opios)[\s/](\S+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/SamsungBrowser/i],describe:function(e){var t={name:"Samsung Internet for Android"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:SamsungBrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Whale/i],describe:function(e){var t={name:"NAVER Whale Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:whale)[\s/](\d+(?:\.\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/MZBrowser/i],describe:function(e){var t={name:"MZ Browser"},r=i.default.getFirstMatch(/(?:MZBrowser)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/focus/i],describe:function(e){var t={name:"Focus"},r=i.default.getFirstMatch(/(?:focus)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/swing/i],describe:function(e){var t={name:"Swing"},r=i.default.getFirstMatch(/(?:swing)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/coast/i],describe:function(e){var t={name:"Opera Coast"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:coast)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/opt\/\d+(?:.?_?\d+)+/i],describe:function(e){var t={name:"Opera Touch"},r=i.default.getFirstMatch(/(?:opt)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/yabrowser/i],describe:function(e){var t={name:"Yandex Browser"},r=i.default.getFirstMatch(/(?:yabrowser)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/ucbrowser/i],describe:function(e){var t={name:"UC Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:ucbrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Maxthon|mxios/i],describe:function(e){var t={name:"Maxthon"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:Maxthon|mxios)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/epiphany/i],describe:function(e){var t={name:"Epiphany"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:epiphany)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/puffin/i],describe:function(e){var t={name:"Puffin"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:puffin)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sleipnir/i],describe:function(e){var t={name:"Sleipnir"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:sleipnir)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/k-meleon/i],describe:function(e){var t={name:"K-Meleon"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:k-meleon)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/micromessenger/i],describe:function(e){var t={name:"WeChat"},r=i.default.getFirstMatch(/(?:micromessenger)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/qqbrowser/i],describe:function(e){var t={name:/qqbrowserlite/i.test(e)?"QQ Browser Lite":"QQ Browser"},r=i.default.getFirstMatch(/(?:qqbrowserlite|qqbrowser)[/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/msie|trident/i],describe:function(e){var t={name:"Internet Explorer"},r=i.default.getFirstMatch(/(?:msie |rv:)(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/\sedg\//i],describe:function(e){var t={name:"Microsoft Edge"},r=i.default.getFirstMatch(/\sedg\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/edg([ea]|ios)/i],describe:function(e){var t={name:"Microsoft Edge"},r=i.default.getSecondMatch(/edg([ea]|ios)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/vivaldi/i],describe:function(e){var t={name:"Vivaldi"},r=i.default.getFirstMatch(/vivaldi\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/seamonkey/i],describe:function(e){var t={name:"SeaMonkey"},r=i.default.getFirstMatch(/seamonkey\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sailfish/i],describe:function(e){var t={name:"Sailfish"},r=i.default.getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i,e);return r&&(t.version=r),t}},{test:[/silk/i],describe:function(e){var t={name:"Amazon Silk"},r=i.default.getFirstMatch(/silk\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/phantom/i],describe:function(e){var t={name:"PhantomJS"},r=i.default.getFirstMatch(/phantomjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/slimerjs/i],describe:function(e){var t={name:"SlimerJS"},r=i.default.getFirstMatch(/slimerjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t={name:"BlackBerry"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/blackberry[\d]+\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t={name:"WebOS Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/w(?:eb)?[o0]sbrowser\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/bada/i],describe:function(e){var t={name:"Bada"},r=i.default.getFirstMatch(/dolfin\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/tizen/i],describe:function(e){var t={name:"Tizen"},r=i.default.getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/qupzilla/i],describe:function(e){var t={name:"QupZilla"},r=i.default.getFirstMatch(/(?:qupzilla)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/firefox|iceweasel|fxios/i],describe:function(e){var t={name:"Firefox"},r=i.default.getFirstMatch(/(?:firefox|iceweasel|fxios)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/electron/i],describe:function(e){var t={name:"Electron"},r=i.default.getFirstMatch(/(?:electron)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/MiuiBrowser/i],describe:function(e){var t={name:"Miui"},r=i.default.getFirstMatch(/(?:MiuiBrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/chromium/i],describe:function(e){var t={name:"Chromium"},r=i.default.getFirstMatch(/(?:chromium)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/chrome|crios|crmo/i],describe:function(e){var t={name:"Chrome"},r=i.default.getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/GSA/i],describe:function(e){var t={name:"Google Search"},r=i.default.getFirstMatch(/(?:GSA)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t={name:"Android Browser"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/playstation 4/i],describe:function(e){var t={name:"PlayStation 4"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/safari|applewebkit/i],describe:function(e){var t={name:"Safari"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/.*/i],describe:function(e){var t=-1!==e.search("\\(")?/^(.*)\/(.*)[ \t]\((.*)/:/^(.*)\/(.*) /;return{name:i.default.getFirstMatch(t,e),version:i.default.getSecondMatch(t,e)}}}];t.default=a,e.exports=t.default},93:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:[/Roku\/DVP/],describe:function(e){var t=i.default.getFirstMatch(/Roku\/DVP-(\d+\.\d+)/i,e);return{name:s.OS_MAP.Roku,version:t}}},{test:[/windows phone/i],describe:function(e){var t=i.default.getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.WindowsPhone,version:t}}},{test:[/windows /i],describe:function(e){var t=i.default.getFirstMatch(/Windows ((NT|XP)( \d\d?.\d)?)/i,e),r=i.default.getWindowsVersionName(t);return{name:s.OS_MAP.Windows,version:t,versionName:r}}},{test:[/Macintosh(.*?) FxiOS(.*?)\//],describe:function(e){var t={name:s.OS_MAP.iOS},r=i.default.getSecondMatch(/(Version\/)(\d[\d.]+)/,e);return r&&(t.version=r),t}},{test:[/macintosh/i],describe:function(e){var t=i.default.getFirstMatch(/mac os x (\d+(\.?_?\d+)+)/i,e).replace(/[_\s]/g,"."),r=i.default.getMacOSVersionName(t),n={name:s.OS_MAP.MacOS,version:t};return r&&(n.versionName=r),n}},{test:[/(ipod|iphone|ipad)/i],describe:function(e){var t=i.default.getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i,e).replace(/[_\s]/g,".");return{name:s.OS_MAP.iOS,version:t}}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t=i.default.getFirstMatch(/android[\s/-](\d+(\.\d+)*)/i,e),r=i.default.getAndroidVersionName(t),n={name:s.OS_MAP.Android,version:t};return r&&(n.versionName=r),n}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t=i.default.getFirstMatch(/(?:web|hpw)[o0]s\/(\d+(\.\d+)*)/i,e),r={name:s.OS_MAP.WebOS};return t&&t.length&&(r.version=t),r}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t=i.default.getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i,e)||i.default.getFirstMatch(/blackberry\d+\/(\d+([_\s]\d+)*)/i,e)||i.default.getFirstMatch(/\bbb(\d+)/i,e);return{name:s.OS_MAP.BlackBerry,version:t}}},{test:[/bada/i],describe:function(e){var t=i.default.getFirstMatch(/bada\/(\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.Bada,version:t}}},{test:[/tizen/i],describe:function(e){var t=i.default.getFirstMatch(/tizen[/\s](\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.Tizen,version:t}}},{test:[/linux/i],describe:function(){return{name:s.OS_MAP.Linux}}},{test:[/CrOS/],describe:function(){return{name:s.OS_MAP.ChromeOS}}},{test:[/PlayStation 4/],describe:function(e){var t=i.default.getFirstMatch(/PlayStation 4[/\s](\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.PlayStation4,version:t}}}];t.default=a,e.exports=t.default},94:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:[/googlebot/i],describe:function(){return{type:"bot",vendor:"Google"}}},{test:[/huawei/i],describe:function(e){var t=i.default.getFirstMatch(/(can-l01)/i,e)&&"Nova",r={type:s.PLATFORMS_MAP.mobile,vendor:"Huawei"};return t&&(r.model=t),r}},{test:[/nexus\s*(?:7|8|9|10).*/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Nexus"}}},{test:[/ipad/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Apple",model:"iPad"}}},{test:[/Macintosh(.*?) FxiOS(.*?)\//],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Apple",model:"iPad"}}},{test:[/kftt build/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Amazon",model:"Kindle Fire HD 7"}}},{test:[/silk/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Amazon"}}},{test:[/tablet(?! pc)/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet}}},{test:function(e){var t=e.test(/ipod|iphone/i),r=e.test(/like (ipod|iphone)/i);return t&&!r},describe:function(e){var t=i.default.getFirstMatch(/(ipod|iphone)/i,e);return{type:s.PLATFORMS_MAP.mobile,vendor:"Apple",model:t}}},{test:[/nexus\s*[0-6].*/i,/galaxy nexus/i],describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"Nexus"}}},{test:[/[^-]mobi/i],describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"blackberry"===e.getBrowserName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"BlackBerry"}}},{test:function(e){return"bada"===e.getBrowserName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"windows phone"===e.getBrowserName()},describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"Microsoft"}}},{test:function(e){var t=Number(String(e.getOSVersion()).split(".")[0]);return"android"===e.getOSName(!0)&&t>=3},describe:function(){return{type:s.PLATFORMS_MAP.tablet}}},{test:function(e){return"android"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"macos"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop,vendor:"Apple"}}},{test:function(e){return"windows"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop}}},{test:function(e){return"linux"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop}}},{test:function(e){return"playstation 4"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.tv}}},{test:function(e){return"roku"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.tv}}}];t.default=a,e.exports=t.default},95:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:function(e){return"microsoft edge"===e.getBrowserName(!0)},describe:function(e){if(/\sedg\//i.test(e))return{name:s.ENGINE_MAP.Blink};var t=i.default.getFirstMatch(/edge\/(\d+(\.?_?\d+)+)/i,e);return{name:s.ENGINE_MAP.EdgeHTML,version:t}}},{test:[/trident/i],describe:function(e){var t={name:s.ENGINE_MAP.Trident},r=i.default.getFirstMatch(/trident\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){return e.test(/presto/i)},describe:function(e){var t={name:s.ENGINE_MAP.Presto},r=i.default.getFirstMatch(/presto\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=e.test(/gecko/i),r=e.test(/like gecko/i);return t&&!r},describe:function(e){var t={name:s.ENGINE_MAP.Gecko},r=i.default.getFirstMatch(/gecko\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(apple)?webkit\/537\.36/i],describe:function(){return{name:s.ENGINE_MAP.Blink}}},{test:[/(apple)?webkit/i],describe:function(e){var t={name:s.ENGINE_MAP.WebKit},r=i.default.getFirstMatch(/webkit\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}}];t.default=a,e.exports=t.default}})}));
 },{}],45:[function(require,module,exports){
+!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.bowser=t():e.bowser=t()}(this,(function(){return function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=e,r.c=t,r.d=function(e,t,n){r.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.t=function(e,t){if(1&t&&(e=r(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var i in e)r.d(n,i,function(t){return e[t]}.bind(null,i));return n},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=90)}({17:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n=r(18),i=function(){function e(){}return e.getFirstMatch=function(e,t){var r=t.match(e);return r&&r.length>0&&r[1]||""},e.getSecondMatch=function(e,t){var r=t.match(e);return r&&r.length>1&&r[2]||""},e.matchAndReturnConst=function(e,t,r){if(e.test(t))return r},e.getWindowsVersionName=function(e){switch(e){case"NT":return"NT";case"XP":return"XP";case"NT 5.0":return"2000";case"NT 5.1":return"XP";case"NT 5.2":return"2003";case"NT 6.0":return"Vista";case"NT 6.1":return"7";case"NT 6.2":return"8";case"NT 6.3":return"8.1";case"NT 10.0":return"10";default:return}},e.getMacOSVersionName=function(e){var t=e.split(".").splice(0,2).map((function(e){return parseInt(e,10)||0}));if(t.push(0),10===t[0])switch(t[1]){case 5:return"Leopard";case 6:return"Snow Leopard";case 7:return"Lion";case 8:return"Mountain Lion";case 9:return"Mavericks";case 10:return"Yosemite";case 11:return"El Capitan";case 12:return"Sierra";case 13:return"High Sierra";case 14:return"Mojave";case 15:return"Catalina";default:return}},e.getAndroidVersionName=function(e){var t=e.split(".").splice(0,2).map((function(e){return parseInt(e,10)||0}));if(t.push(0),!(1===t[0]&&t[1]<5))return 1===t[0]&&t[1]<6?"Cupcake":1===t[0]&&t[1]>=6?"Donut":2===t[0]&&t[1]<2?"Eclair":2===t[0]&&2===t[1]?"Froyo":2===t[0]&&t[1]>2?"Gingerbread":3===t[0]?"Honeycomb":4===t[0]&&t[1]<1?"Ice Cream Sandwich":4===t[0]&&t[1]<4?"Jelly Bean":4===t[0]&&t[1]>=4?"KitKat":5===t[0]?"Lollipop":6===t[0]?"Marshmallow":7===t[0]?"Nougat":8===t[0]?"Oreo":9===t[0]?"Pie":void 0},e.getVersionPrecision=function(e){return e.split(".").length},e.compareVersions=function(t,r,n){void 0===n&&(n=!1);var i=e.getVersionPrecision(t),s=e.getVersionPrecision(r),a=Math.max(i,s),o=0,u=e.map([t,r],(function(t){var r=a-e.getVersionPrecision(t),n=t+new Array(r+1).join(".0");return e.map(n.split("."),(function(e){return new Array(20-e.length).join("0")+e})).reverse()}));for(n&&(o=a-Math.min(i,s)),a-=1;a>=o;){if(u[0][a]>u[1][a])return 1;if(u[0][a]===u[1][a]){if(a===o)return 0;a-=1}else if(u[0][a]<u[1][a])return-1}},e.map=function(e,t){var r,n=[];if(Array.prototype.map)return Array.prototype.map.call(e,t);for(r=0;r<e.length;r+=1)n.push(t(e[r]));return n},e.find=function(e,t){var r,n;if(Array.prototype.find)return Array.prototype.find.call(e,t);for(r=0,n=e.length;r<n;r+=1){var i=e[r];if(t(i,r))return i}},e.assign=function(e){for(var t,r,n=e,i=arguments.length,s=new Array(i>1?i-1:0),a=1;a<i;a++)s[a-1]=arguments[a];if(Object.assign)return Object.assign.apply(Object,[e].concat(s));var o=function(){var e=s[t];"object"==typeof e&&null!==e&&Object.keys(e).forEach((function(t){n[t]=e[t]}))};for(t=0,r=s.length;t<r;t+=1)o();return e},e.getBrowserAlias=function(e){return n.BROWSER_ALIASES_MAP[e]},e.getBrowserTypeByAlias=function(e){return n.BROWSER_MAP[e]||""},e}();t.default=i,e.exports=t.default},18:function(e,t,r){"use strict";t.__esModule=!0,t.ENGINE_MAP=t.OS_MAP=t.PLATFORMS_MAP=t.BROWSER_MAP=t.BROWSER_ALIASES_MAP=void 0;t.BROWSER_ALIASES_MAP={"Amazon Silk":"amazon_silk","Android Browser":"android",Bada:"bada",BlackBerry:"blackberry",Chrome:"chrome",Chromium:"chromium",Electron:"electron",Epiphany:"epiphany",Firefox:"firefox",Focus:"focus",Generic:"generic","Google Search":"google_search",Googlebot:"googlebot","Internet Explorer":"ie","K-Meleon":"k_meleon",Maxthon:"maxthon","Microsoft Edge":"edge","MZ Browser":"mz","NAVER Whale Browser":"naver",Opera:"opera","Opera Coast":"opera_coast",PhantomJS:"phantomjs",Puffin:"puffin",QupZilla:"qupzilla",QQ:"qq",QQLite:"qqlite",Safari:"safari",Sailfish:"sailfish","Samsung Internet for Android":"samsung_internet",SeaMonkey:"seamonkey",Sleipnir:"sleipnir",Swing:"swing",Tizen:"tizen","UC Browser":"uc",Vivaldi:"vivaldi","WebOS Browser":"webos",WeChat:"wechat","Yandex Browser":"yandex",Roku:"roku"};t.BROWSER_MAP={amazon_silk:"Amazon Silk",android:"Android Browser",bada:"Bada",blackberry:"BlackBerry",chrome:"Chrome",chromium:"Chromium",electron:"Electron",epiphany:"Epiphany",firefox:"Firefox",focus:"Focus",generic:"Generic",googlebot:"Googlebot",google_search:"Google Search",ie:"Internet Explorer",k_meleon:"K-Meleon",maxthon:"Maxthon",edge:"Microsoft Edge",mz:"MZ Browser",naver:"NAVER Whale Browser",opera:"Opera",opera_coast:"Opera Coast",phantomjs:"PhantomJS",puffin:"Puffin",qupzilla:"QupZilla",qq:"QQ Browser",qqlite:"QQ Browser Lite",safari:"Safari",sailfish:"Sailfish",samsung_internet:"Samsung Internet for Android",seamonkey:"SeaMonkey",sleipnir:"Sleipnir",swing:"Swing",tizen:"Tizen",uc:"UC Browser",vivaldi:"Vivaldi",webos:"WebOS Browser",wechat:"WeChat",yandex:"Yandex Browser"};t.PLATFORMS_MAP={tablet:"tablet",mobile:"mobile",desktop:"desktop",tv:"tv"};t.OS_MAP={WindowsPhone:"Windows Phone",Windows:"Windows",MacOS:"macOS",iOS:"iOS",Android:"Android",WebOS:"WebOS",BlackBerry:"BlackBerry",Bada:"Bada",Tizen:"Tizen",Linux:"Linux",ChromeOS:"Chrome OS",PlayStation4:"PlayStation 4",Roku:"Roku"};t.ENGINE_MAP={EdgeHTML:"EdgeHTML",Blink:"Blink",Trident:"Trident",Presto:"Presto",Gecko:"Gecko",WebKit:"WebKit"}},90:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(91))&&n.__esModule?n:{default:n},s=r(18);function a(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}var o=function(){function e(){}var t,r,n;return e.getParser=function(e,t){if(void 0===t&&(t=!1),"string"!=typeof e)throw new Error("UserAgent should be a string");return new i.default(e,t)},e.parse=function(e){return new i.default(e).getResult()},t=e,n=[{key:"BROWSER_MAP",get:function(){return s.BROWSER_MAP}},{key:"ENGINE_MAP",get:function(){return s.ENGINE_MAP}},{key:"OS_MAP",get:function(){return s.OS_MAP}},{key:"PLATFORMS_MAP",get:function(){return s.PLATFORMS_MAP}}],(r=null)&&a(t.prototype,r),n&&a(t,n),e}();t.default=o,e.exports=t.default},91:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n=u(r(92)),i=u(r(93)),s=u(r(94)),a=u(r(95)),o=u(r(17));function u(e){return e&&e.__esModule?e:{default:e}}var d=function(){function e(e,t){if(void 0===t&&(t=!1),null==e||""===e)throw new Error("UserAgent parameter can't be empty");this._ua=e,this.parsedResult={},!0!==t&&this.parse()}var t=e.prototype;return t.getUA=function(){return this._ua},t.test=function(e){return e.test(this._ua)},t.parseBrowser=function(){var e=this;this.parsedResult.browser={};var t=o.default.find(n.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.browser=t.describe(this.getUA())),this.parsedResult.browser},t.getBrowser=function(){return this.parsedResult.browser?this.parsedResult.browser:this.parseBrowser()},t.getBrowserName=function(e){return e?String(this.getBrowser().name).toLowerCase()||"":this.getBrowser().name||""},t.getBrowserVersion=function(){return this.getBrowser().version},t.getOS=function(){return this.parsedResult.os?this.parsedResult.os:this.parseOS()},t.parseOS=function(){var e=this;this.parsedResult.os={};var t=o.default.find(i.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.os=t.describe(this.getUA())),this.parsedResult.os},t.getOSName=function(e){var t=this.getOS().name;return e?String(t).toLowerCase()||"":t||""},t.getOSVersion=function(){return this.getOS().version},t.getPlatform=function(){return this.parsedResult.platform?this.parsedResult.platform:this.parsePlatform()},t.getPlatformType=function(e){void 0===e&&(e=!1);var t=this.getPlatform().type;return e?String(t).toLowerCase()||"":t||""},t.parsePlatform=function(){var e=this;this.parsedResult.platform={};var t=o.default.find(s.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.platform=t.describe(this.getUA())),this.parsedResult.platform},t.getEngine=function(){return this.parsedResult.engine?this.parsedResult.engine:this.parseEngine()},t.getEngineName=function(e){return e?String(this.getEngine().name).toLowerCase()||"":this.getEngine().name||""},t.parseEngine=function(){var e=this;this.parsedResult.engine={};var t=o.default.find(a.default,(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some((function(t){return e.test(t)}));throw new Error("Browser's test function is not valid")}));return t&&(this.parsedResult.engine=t.describe(this.getUA())),this.parsedResult.engine},t.parse=function(){return this.parseBrowser(),this.parseOS(),this.parsePlatform(),this.parseEngine(),this},t.getResult=function(){return o.default.assign({},this.parsedResult)},t.satisfies=function(e){var t=this,r={},n=0,i={},s=0;if(Object.keys(e).forEach((function(t){var a=e[t];"string"==typeof a?(i[t]=a,s+=1):"object"==typeof a&&(r[t]=a,n+=1)})),n>0){var a=Object.keys(r),u=o.default.find(a,(function(e){return t.isOS(e)}));if(u){var d=this.satisfies(r[u]);if(void 0!==d)return d}var c=o.default.find(a,(function(e){return t.isPlatform(e)}));if(c){var f=this.satisfies(r[c]);if(void 0!==f)return f}}if(s>0){var l=Object.keys(i),h=o.default.find(l,(function(e){return t.isBrowser(e,!0)}));if(void 0!==h)return this.compareVersion(i[h])}},t.isBrowser=function(e,t){void 0===t&&(t=!1);var r=this.getBrowserName().toLowerCase(),n=e.toLowerCase(),i=o.default.getBrowserTypeByAlias(n);return t&&i&&(n=i.toLowerCase()),n===r},t.compareVersion=function(e){var t=[0],r=e,n=!1,i=this.getBrowserVersion();if("string"==typeof i)return">"===e[0]||"<"===e[0]?(r=e.substr(1),"="===e[1]?(n=!0,r=e.substr(2)):t=[],">"===e[0]?t.push(1):t.push(-1)):"="===e[0]?r=e.substr(1):"~"===e[0]&&(n=!0,r=e.substr(1)),t.indexOf(o.default.compareVersions(i,r,n))>-1},t.isOS=function(e){return this.getOSName(!0)===String(e).toLowerCase()},t.isPlatform=function(e){return this.getPlatformType(!0)===String(e).toLowerCase()},t.isEngine=function(e){return this.getEngineName(!0)===String(e).toLowerCase()},t.is=function(e,t){return void 0===t&&(t=!1),this.isBrowser(e,t)||this.isOS(e)||this.isPlatform(e)},t.some=function(e){var t=this;return void 0===e&&(e=[]),e.some((function(e){return t.is(e)}))},e}();t.default=d,e.exports=t.default},92:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n};var s=/version\/(\d+(\.?_?\d+)+)/i,a=[{test:[/googlebot/i],describe:function(e){var t={name:"Googlebot"},r=i.default.getFirstMatch(/googlebot\/(\d+(\.\d+))/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/opera/i],describe:function(e){var t={name:"Opera"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:opera)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/opr\/|opios/i],describe:function(e){var t={name:"Opera"},r=i.default.getFirstMatch(/(?:opr|opios)[\s/](\S+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/SamsungBrowser/i],describe:function(e){var t={name:"Samsung Internet for Android"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:SamsungBrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Whale/i],describe:function(e){var t={name:"NAVER Whale Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:whale)[\s/](\d+(?:\.\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/MZBrowser/i],describe:function(e){var t={name:"MZ Browser"},r=i.default.getFirstMatch(/(?:MZBrowser)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/focus/i],describe:function(e){var t={name:"Focus"},r=i.default.getFirstMatch(/(?:focus)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/swing/i],describe:function(e){var t={name:"Swing"},r=i.default.getFirstMatch(/(?:swing)[\s/](\d+(?:\.\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/coast/i],describe:function(e){var t={name:"Opera Coast"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:coast)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/opt\/\d+(?:.?_?\d+)+/i],describe:function(e){var t={name:"Opera Touch"},r=i.default.getFirstMatch(/(?:opt)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/yabrowser/i],describe:function(e){var t={name:"Yandex Browser"},r=i.default.getFirstMatch(/(?:yabrowser)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/ucbrowser/i],describe:function(e){var t={name:"UC Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:ucbrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Maxthon|mxios/i],describe:function(e){var t={name:"Maxthon"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:Maxthon|mxios)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/epiphany/i],describe:function(e){var t={name:"Epiphany"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:epiphany)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/puffin/i],describe:function(e){var t={name:"Puffin"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:puffin)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sleipnir/i],describe:function(e){var t={name:"Sleipnir"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:sleipnir)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/k-meleon/i],describe:function(e){var t={name:"K-Meleon"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/(?:k-meleon)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/micromessenger/i],describe:function(e){var t={name:"WeChat"},r=i.default.getFirstMatch(/(?:micromessenger)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/qqbrowser/i],describe:function(e){var t={name:/qqbrowserlite/i.test(e)?"QQ Browser Lite":"QQ Browser"},r=i.default.getFirstMatch(/(?:qqbrowserlite|qqbrowser)[/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/msie|trident/i],describe:function(e){var t={name:"Internet Explorer"},r=i.default.getFirstMatch(/(?:msie |rv:)(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/\sedg\//i],describe:function(e){var t={name:"Microsoft Edge"},r=i.default.getFirstMatch(/\sedg\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/edg([ea]|ios)/i],describe:function(e){var t={name:"Microsoft Edge"},r=i.default.getSecondMatch(/edg([ea]|ios)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/vivaldi/i],describe:function(e){var t={name:"Vivaldi"},r=i.default.getFirstMatch(/vivaldi\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/seamonkey/i],describe:function(e){var t={name:"SeaMonkey"},r=i.default.getFirstMatch(/seamonkey\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sailfish/i],describe:function(e){var t={name:"Sailfish"},r=i.default.getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i,e);return r&&(t.version=r),t}},{test:[/silk/i],describe:function(e){var t={name:"Amazon Silk"},r=i.default.getFirstMatch(/silk\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/phantom/i],describe:function(e){var t={name:"PhantomJS"},r=i.default.getFirstMatch(/phantomjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/slimerjs/i],describe:function(e){var t={name:"SlimerJS"},r=i.default.getFirstMatch(/slimerjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t={name:"BlackBerry"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/blackberry[\d]+\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t={name:"WebOS Browser"},r=i.default.getFirstMatch(s,e)||i.default.getFirstMatch(/w(?:eb)?[o0]sbrowser\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/bada/i],describe:function(e){var t={name:"Bada"},r=i.default.getFirstMatch(/dolfin\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/tizen/i],describe:function(e){var t={name:"Tizen"},r=i.default.getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/qupzilla/i],describe:function(e){var t={name:"QupZilla"},r=i.default.getFirstMatch(/(?:qupzilla)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/firefox|iceweasel|fxios/i],describe:function(e){var t={name:"Firefox"},r=i.default.getFirstMatch(/(?:firefox|iceweasel|fxios)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/electron/i],describe:function(e){var t={name:"Electron"},r=i.default.getFirstMatch(/(?:electron)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/MiuiBrowser/i],describe:function(e){var t={name:"Miui"},r=i.default.getFirstMatch(/(?:MiuiBrowser)[\s/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/chromium/i],describe:function(e){var t={name:"Chromium"},r=i.default.getFirstMatch(/(?:chromium)[\s/](\d+(\.?_?\d+)+)/i,e)||i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/chrome|crios|crmo/i],describe:function(e){var t={name:"Chrome"},r=i.default.getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/GSA/i],describe:function(e){var t={name:"Google Search"},r=i.default.getFirstMatch(/(?:GSA)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t={name:"Android Browser"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/playstation 4/i],describe:function(e){var t={name:"PlayStation 4"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/safari|applewebkit/i],describe:function(e){var t={name:"Safari"},r=i.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/.*/i],describe:function(e){var t=-1!==e.search("\\(")?/^(.*)\/(.*)[ \t]\((.*)/:/^(.*)\/(.*) /;return{name:i.default.getFirstMatch(t,e),version:i.default.getSecondMatch(t,e)}}}];t.default=a,e.exports=t.default},93:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:[/Roku\/DVP/],describe:function(e){var t=i.default.getFirstMatch(/Roku\/DVP-(\d+\.\d+)/i,e);return{name:s.OS_MAP.Roku,version:t}}},{test:[/windows phone/i],describe:function(e){var t=i.default.getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.WindowsPhone,version:t}}},{test:[/windows /i],describe:function(e){var t=i.default.getFirstMatch(/Windows ((NT|XP)( \d\d?.\d)?)/i,e),r=i.default.getWindowsVersionName(t);return{name:s.OS_MAP.Windows,version:t,versionName:r}}},{test:[/Macintosh(.*?) FxiOS(.*?)\//],describe:function(e){var t={name:s.OS_MAP.iOS},r=i.default.getSecondMatch(/(Version\/)(\d[\d.]+)/,e);return r&&(t.version=r),t}},{test:[/macintosh/i],describe:function(e){var t=i.default.getFirstMatch(/mac os x (\d+(\.?_?\d+)+)/i,e).replace(/[_\s]/g,"."),r=i.default.getMacOSVersionName(t),n={name:s.OS_MAP.MacOS,version:t};return r&&(n.versionName=r),n}},{test:[/(ipod|iphone|ipad)/i],describe:function(e){var t=i.default.getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i,e).replace(/[_\s]/g,".");return{name:s.OS_MAP.iOS,version:t}}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t=i.default.getFirstMatch(/android[\s/-](\d+(\.\d+)*)/i,e),r=i.default.getAndroidVersionName(t),n={name:s.OS_MAP.Android,version:t};return r&&(n.versionName=r),n}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t=i.default.getFirstMatch(/(?:web|hpw)[o0]s\/(\d+(\.\d+)*)/i,e),r={name:s.OS_MAP.WebOS};return t&&t.length&&(r.version=t),r}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t=i.default.getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i,e)||i.default.getFirstMatch(/blackberry\d+\/(\d+([_\s]\d+)*)/i,e)||i.default.getFirstMatch(/\bbb(\d+)/i,e);return{name:s.OS_MAP.BlackBerry,version:t}}},{test:[/bada/i],describe:function(e){var t=i.default.getFirstMatch(/bada\/(\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.Bada,version:t}}},{test:[/tizen/i],describe:function(e){var t=i.default.getFirstMatch(/tizen[/\s](\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.Tizen,version:t}}},{test:[/linux/i],describe:function(){return{name:s.OS_MAP.Linux}}},{test:[/CrOS/],describe:function(){return{name:s.OS_MAP.ChromeOS}}},{test:[/PlayStation 4/],describe:function(e){var t=i.default.getFirstMatch(/PlayStation 4[/\s](\d+(\.\d+)*)/i,e);return{name:s.OS_MAP.PlayStation4,version:t}}}];t.default=a,e.exports=t.default},94:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:[/googlebot/i],describe:function(){return{type:"bot",vendor:"Google"}}},{test:[/huawei/i],describe:function(e){var t=i.default.getFirstMatch(/(can-l01)/i,e)&&"Nova",r={type:s.PLATFORMS_MAP.mobile,vendor:"Huawei"};return t&&(r.model=t),r}},{test:[/nexus\s*(?:7|8|9|10).*/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Nexus"}}},{test:[/ipad/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Apple",model:"iPad"}}},{test:[/Macintosh(.*?) FxiOS(.*?)\//],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Apple",model:"iPad"}}},{test:[/kftt build/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Amazon",model:"Kindle Fire HD 7"}}},{test:[/silk/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet,vendor:"Amazon"}}},{test:[/tablet(?! pc)/i],describe:function(){return{type:s.PLATFORMS_MAP.tablet}}},{test:function(e){var t=e.test(/ipod|iphone/i),r=e.test(/like (ipod|iphone)/i);return t&&!r},describe:function(e){var t=i.default.getFirstMatch(/(ipod|iphone)/i,e);return{type:s.PLATFORMS_MAP.mobile,vendor:"Apple",model:t}}},{test:[/nexus\s*[0-6].*/i,/galaxy nexus/i],describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"Nexus"}}},{test:[/[^-]mobi/i],describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"blackberry"===e.getBrowserName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"BlackBerry"}}},{test:function(e){return"bada"===e.getBrowserName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"windows phone"===e.getBrowserName()},describe:function(){return{type:s.PLATFORMS_MAP.mobile,vendor:"Microsoft"}}},{test:function(e){var t=Number(String(e.getOSVersion()).split(".")[0]);return"android"===e.getOSName(!0)&&t>=3},describe:function(){return{type:s.PLATFORMS_MAP.tablet}}},{test:function(e){return"android"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.mobile}}},{test:function(e){return"macos"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop,vendor:"Apple"}}},{test:function(e){return"windows"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop}}},{test:function(e){return"linux"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.desktop}}},{test:function(e){return"playstation 4"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.tv}}},{test:function(e){return"roku"===e.getOSName(!0)},describe:function(){return{type:s.PLATFORMS_MAP.tv}}}];t.default=a,e.exports=t.default},95:function(e,t,r){"use strict";t.__esModule=!0,t.default=void 0;var n,i=(n=r(17))&&n.__esModule?n:{default:n},s=r(18);var a=[{test:function(e){return"microsoft edge"===e.getBrowserName(!0)},describe:function(e){if(/\sedg\//i.test(e))return{name:s.ENGINE_MAP.Blink};var t=i.default.getFirstMatch(/edge\/(\d+(\.?_?\d+)+)/i,e);return{name:s.ENGINE_MAP.EdgeHTML,version:t}}},{test:[/trident/i],describe:function(e){var t={name:s.ENGINE_MAP.Trident},r=i.default.getFirstMatch(/trident\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){return e.test(/presto/i)},describe:function(e){var t={name:s.ENGINE_MAP.Presto},r=i.default.getFirstMatch(/presto\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=e.test(/gecko/i),r=e.test(/like gecko/i);return t&&!r},describe:function(e){var t={name:s.ENGINE_MAP.Gecko},r=i.default.getFirstMatch(/gecko\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(apple)?webkit\/537\.36/i],describe:function(){return{name:s.ENGINE_MAP.Blink}}},{test:[/(apple)?webkit/i],describe:function(e){var t={name:s.ENGINE_MAP.WebKit},r=i.default.getFirstMatch(/webkit\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}}];t.default=a,e.exports=t.default}})}));
+},{}],46:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13791,7 +14099,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -15572,7 +15880,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":43,"buffer":46,"ieee754":71}],47:[function(require,module,exports){
+},{"base64-js":44,"buffer":47,"ieee754":72}],48:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -15845,7 +16153,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":48,"_process":112}],48:[function(require,module,exports){
+},{"./common":49,"_process":113}],49:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -16121,7 +16429,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":108}],49:[function(require,module,exports){
+},{"ms":109}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasCORS = void 0;
@@ -16137,7 +16445,7 @@ catch (err) {
 }
 exports.hasCORS = value;
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 // imported from https://github.com/galkn/querystring
 /**
@@ -16178,7 +16486,7 @@ function decode(qs) {
 }
 exports.decode = decode;
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = void 0;
@@ -16248,7 +16556,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 // imported from https://github.com/unshiftio/yeast
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -16305,7 +16613,7 @@ exports.yeast = yeast;
 for (; i < length; i++)
     map[alphabet[i]] = i;
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.globalThisShim = void 0;
@@ -16321,7 +16629,7 @@ exports.globalThisShim = (() => {
     }
 })();
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nextTick = exports.parse = exports.installTimerFunctions = exports.transports = exports.TransportError = exports.Transport = exports.protocol = exports.Socket = void 0;
@@ -16340,7 +16648,7 @@ Object.defineProperty(exports, "parse", { enumerable: true, get: function () { r
 var websocket_constructor_js_1 = require("./transports/websocket-constructor.js");
 Object.defineProperty(exports, "nextTick", { enumerable: true, get: function () { return websocket_constructor_js_1.nextTick; } });
 
-},{"./contrib/parseuri.js":51,"./socket.js":55,"./transport.js":56,"./transports/index.js":57,"./transports/websocket-constructor.js":59,"./util.js":63}],55:[function(require,module,exports){
+},{"./contrib/parseuri.js":52,"./socket.js":56,"./transport.js":57,"./transports/index.js":58,"./transports/websocket-constructor.js":60,"./util.js":64}],56:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -16968,7 +17276,7 @@ class Socket extends component_emitter_1.Emitter {
 exports.Socket = Socket;
 Socket.protocol = engine_io_parser_1.protocol;
 
-},{"./contrib/parseqs.js":50,"./contrib/parseuri.js":51,"./transports/index.js":57,"./transports/websocket-constructor.js":59,"./util.js":63,"@socket.io/component-emitter":39,"debug":47,"engine.io-parser":68}],56:[function(require,module,exports){
+},{"./contrib/parseqs.js":51,"./contrib/parseuri.js":52,"./transports/index.js":58,"./transports/websocket-constructor.js":60,"./util.js":64,"@socket.io/component-emitter":40,"debug":48,"engine.io-parser":69}],57:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -17122,7 +17430,7 @@ class Transport extends component_emitter_1.Emitter {
 }
 exports.Transport = Transport;
 
-},{"./contrib/parseqs.js":50,"./util.js":63,"@socket.io/component-emitter":39,"debug":47,"engine.io-parser":68}],57:[function(require,module,exports){
+},{"./contrib/parseqs.js":51,"./util.js":64,"@socket.io/component-emitter":40,"debug":48,"engine.io-parser":69}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transports = void 0;
@@ -17135,7 +17443,7 @@ exports.transports = {
     polling: polling_js_1.Polling,
 };
 
-},{"./polling.js":58,"./websocket.js":60,"./webtransport.js":61}],58:[function(require,module,exports){
+},{"./polling.js":59,"./websocket.js":61,"./webtransport.js":62}],59:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -17551,7 +17859,7 @@ function unloadHandler() {
     }
 }
 
-},{"../contrib/yeast.js":52,"../globalThis.js":53,"../transport.js":56,"../util.js":63,"./xmlhttprequest.js":62,"@socket.io/component-emitter":39,"debug":47,"engine.io-parser":68}],59:[function(require,module,exports){
+},{"../contrib/yeast.js":53,"../globalThis.js":54,"../transport.js":57,"../util.js":64,"./xmlhttprequest.js":63,"@socket.io/component-emitter":40,"debug":48,"engine.io-parser":69}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultBinaryType = exports.usingBrowserWebSocket = exports.WebSocket = exports.nextTick = void 0;
@@ -17569,7 +17877,7 @@ exports.WebSocket = globalThis_js_1.globalThisShim.WebSocket || globalThis_js_1.
 exports.usingBrowserWebSocket = true;
 exports.defaultBinaryType = "arraybuffer";
 
-},{"../globalThis.js":53}],60:[function(require,module,exports){
+},{"../globalThis.js":54}],61:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -17735,7 +18043,7 @@ class WS extends transport_js_1.Transport {
 exports.WS = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../contrib/yeast.js":52,"../transport.js":56,"../util.js":63,"./websocket-constructor.js":59,"buffer":46,"debug":47,"engine.io-parser":68}],61:[function(require,module,exports){
+},{"../contrib/yeast.js":53,"../transport.js":57,"../util.js":64,"./websocket-constructor.js":60,"buffer":47,"debug":48,"engine.io-parser":69}],62:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -17822,7 +18130,7 @@ class WT extends transport_js_1.Transport {
 }
 exports.WT = WT;
 
-},{"../transport.js":56,"./websocket-constructor.js":59,"debug":47,"engine.io-parser":68}],62:[function(require,module,exports){
+},{"../transport.js":57,"./websocket-constructor.js":60,"debug":48,"engine.io-parser":69}],63:[function(require,module,exports){
 "use strict";
 // browser shim for xmlhttprequest module
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -17849,7 +18157,7 @@ exports.XHR = XHR;
 function createCookieJar() { }
 exports.createCookieJar = createCookieJar;
 
-},{"../contrib/has-cors.js":49,"../globalThis.js":53}],63:[function(require,module,exports){
+},{"../contrib/has-cors.js":50,"../globalThis.js":54}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.byteLength = exports.installTimerFunctions = exports.pick = void 0;
@@ -17909,7 +18217,7 @@ function utf8Length(str) {
     return length;
 }
 
-},{"./globalThis.js":53}],64:[function(require,module,exports){
+},{"./globalThis.js":54}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ERROR_PACKET = exports.PACKET_TYPES_REVERSE = exports.PACKET_TYPES = void 0;
@@ -17930,7 +18238,7 @@ Object.keys(PACKET_TYPES).forEach((key) => {
 const ERROR_PACKET = { type: "error", data: "parser error" };
 exports.ERROR_PACKET = ERROR_PACKET;
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decode = exports.encode = void 0;
@@ -17980,7 +18288,7 @@ const decode = (base64) => {
 };
 exports.decode = decode;
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePacket = void 0;
@@ -18048,7 +18356,7 @@ const mapBinary = (data, binaryType) => {
     }
 };
 
-},{"./commons.js":64,"./contrib/base64-arraybuffer.js":65}],67:[function(require,module,exports){
+},{"./commons.js":65,"./contrib/base64-arraybuffer.js":66}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encodePacket = void 0;
@@ -18122,7 +18430,7 @@ function encodePacketToBinary(packet, callback) {
     });
 }
 
-},{"./commons.js":64}],68:[function(require,module,exports){
+},{"./commons.js":65}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePayload = exports.decodePacket = exports.encodePayload = exports.encodePacket = exports.protocol = void 0;
@@ -18288,7 +18596,7 @@ function createPacketDecoderStream(maxPayload, binaryType) {
 }
 exports.protocol = 4;
 
-},{"./commons.js":64,"./decodePacket.js":66,"./encodePacket.js":67}],69:[function(require,module,exports){
+},{"./commons.js":65,"./decodePacket.js":67,"./encodePacket.js":68}],70:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -18327,7 +18635,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":47}],70:[function(require,module,exports){
+},{"debug":48}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateProfileLevelIdStringForAnswer = exports.isSameProfile = exports.parseSdpProfileLevelId = exports.levelToString = exports.profileToString = exports.profileLevelIdToString = exports.parseProfileLevelId = exports.ProfileLevelId = exports.Level = exports.Profile = void 0;
@@ -18803,7 +19111,7 @@ function isLevelAsymmetryAllowed(params = {}) {
         level_asymmetry_allowed === '1');
 }
 
-},{"./Logger":69}],71:[function(require,module,exports){
+},{"./Logger":70}],72:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -18890,7 +19198,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Consumer = void 0;
@@ -19082,7 +19390,7 @@ class Consumer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Consumer = Consumer;
 
-},{"./EnhancedEventEmitter":76,"./Logger":77,"./errors":82}],73:[function(require,module,exports){
+},{"./EnhancedEventEmitter":77,"./Logger":78,"./errors":83}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataConsumer = void 0;
@@ -19246,7 +19554,7 @@ class DataConsumer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.DataConsumer = DataConsumer;
 
-},{"./EnhancedEventEmitter":76,"./Logger":77}],74:[function(require,module,exports){
+},{"./EnhancedEventEmitter":77,"./Logger":78}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataProducer = void 0;
@@ -19428,7 +19736,7 @@ class DataProducer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.DataProducer = DataProducer;
 
-},{"./EnhancedEventEmitter":76,"./Logger":77,"./errors":82}],75:[function(require,module,exports){
+},{"./EnhancedEventEmitter":77,"./Logger":78,"./errors":83}],76:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19909,7 +20217,7 @@ class Device {
 }
 exports.Device = Device;
 
-},{"./EnhancedEventEmitter":76,"./Logger":77,"./Transport":81,"./errors":82,"./handlers/Chrome111":83,"./handlers/Chrome55":84,"./handlers/Chrome67":85,"./handlers/Chrome70":86,"./handlers/Chrome74":87,"./handlers/Edge11":88,"./handlers/Firefox120":89,"./handlers/Firefox60":90,"./handlers/ReactNative":92,"./handlers/ReactNativeUnifiedPlan":93,"./handlers/Safari11":94,"./handlers/Safari12":95,"./ortc":104,"./utils":107,"ua-parser-js":127}],76:[function(require,module,exports){
+},{"./EnhancedEventEmitter":77,"./Logger":78,"./Transport":82,"./errors":83,"./handlers/Chrome111":84,"./handlers/Chrome55":85,"./handlers/Chrome67":86,"./handlers/Chrome70":87,"./handlers/Chrome74":88,"./handlers/Edge11":89,"./handlers/Firefox120":90,"./handlers/Firefox60":91,"./handlers/ReactNative":93,"./handlers/ReactNativeUnifiedPlan":94,"./handlers/Safari11":95,"./handlers/Safari12":96,"./ortc":105,"./utils":108,"ua-parser-js":128}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EnhancedEventEmitter = void 0;
@@ -19981,7 +20289,7 @@ class EnhancedEventEmitter extends npm_events_package_1.EventEmitter {
 }
 exports.EnhancedEventEmitter = EnhancedEventEmitter;
 
-},{"./Logger":77,"npm-events-package":109}],77:[function(require,module,exports){
+},{"./Logger":78,"npm-events-package":110}],78:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20020,7 +20328,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":47}],78:[function(require,module,exports){
+},{"debug":48}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Producer = void 0;
@@ -20309,7 +20617,7 @@ class Producer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Producer = Producer;
 
-},{"./EnhancedEventEmitter":76,"./Logger":77,"./errors":82}],79:[function(require,module,exports){
+},{"./EnhancedEventEmitter":77,"./Logger":78,"./errors":83}],80:[function(require,module,exports){
 "use strict";
 /**
  * The RTP capabilities define what mediasoup or an endpoint can receive at
@@ -20317,11 +20625,11 @@ exports.Producer = Producer;
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -21191,7 +21499,7 @@ class Transport extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Transport = Transport;
 
-},{"./Consumer":72,"./DataConsumer":73,"./DataProducer":74,"./EnhancedEventEmitter":76,"./Logger":77,"./Producer":78,"./errors":82,"./ortc":104,"./utils":107,"awaitqueue":41,"queue-microtask":113}],82:[function(require,module,exports){
+},{"./Consumer":73,"./DataConsumer":74,"./DataProducer":75,"./EnhancedEventEmitter":77,"./Logger":78,"./Producer":79,"./errors":83,"./ortc":105,"./utils":108,"awaitqueue":42,"queue-microtask":114}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InvalidStateError = exports.UnsupportedError = void 0;
@@ -21232,7 +21540,7 @@ class InvalidStateError extends Error {
 }
 exports.InvalidStateError = InvalidStateError;
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -21945,7 +22253,7 @@ class Chrome111 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome111 = Chrome111;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./ortc/utils":97,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],84:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./ortc/utils":98,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],85:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -22501,7 +22809,7 @@ class Chrome55 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome55 = Chrome55;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/planBUtils":101,"sdp-transform":115}],85:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/planBUtils":102,"sdp-transform":116}],86:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -23112,7 +23420,7 @@ class Chrome67 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome67 = Chrome67;
 
-},{"../Logger":77,"../ortc":104,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/planBUtils":101,"sdp-transform":115}],86:[function(require,module,exports){
+},{"../Logger":78,"../ortc":105,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/planBUtils":102,"sdp-transform":116}],87:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -23748,7 +24056,7 @@ class Chrome70 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome70 = Chrome70;
 
-},{"../Logger":77,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],87:[function(require,module,exports){
+},{"../Logger":78,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],88:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -24465,7 +24773,7 @@ class Chrome74 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome74 = Chrome74;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./ortc/utils":97,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],88:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./ortc/utils":98,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],89:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -24920,7 +25228,7 @@ class Edge11 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Edge11 = Edge11;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../utils":107,"./HandlerInterface":91,"./ortc/edgeUtils":96}],89:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../utils":108,"./HandlerInterface":92,"./ortc/edgeUtils":97}],90:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -25651,7 +25959,7 @@ class Firefox120 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Firefox120 = Firefox120;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],90:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],91:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -26384,7 +26692,7 @@ class Firefox60 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Firefox60 = Firefox60;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],91:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HandlerInterface = void 0;
@@ -26396,7 +26704,7 @@ class HandlerInterface extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.HandlerInterface = HandlerInterface;
 
-},{"../EnhancedEventEmitter":76}],92:[function(require,module,exports){
+},{"../EnhancedEventEmitter":77}],93:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -26967,7 +27275,7 @@ class ReactNative extends HandlerInterface_1.HandlerInterface {
 }
 exports.ReactNative = ReactNative;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/planBUtils":101,"sdp-transform":115}],93:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/planBUtils":102,"sdp-transform":116}],94:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -27723,7 +28031,7 @@ class ReactNativeUnifiedPlan extends HandlerInterface_1.HandlerInterface {
 }
 exports.ReactNativeUnifiedPlan = ReactNativeUnifiedPlan;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./ortc/utils":97,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],94:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./ortc/utils":98,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],95:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -28329,7 +28637,7 @@ class Safari11 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Safari11 = Safari11;
 
-},{"../Logger":77,"../ortc":104,"../utils":107,"./HandlerInterface":91,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/planBUtils":101,"sdp-transform":115}],95:[function(require,module,exports){
+},{"../Logger":78,"../ortc":105,"../utils":108,"./HandlerInterface":92,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/planBUtils":102,"sdp-transform":116}],96:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -29037,7 +29345,7 @@ class Safari12 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Safari12 = Safari12;
 
-},{"../Logger":77,"../errors":82,"../ortc":104,"../scalabilityModes":105,"../utils":107,"./HandlerInterface":91,"./ortc/utils":97,"./sdp/RemoteSdp":99,"./sdp/commonUtils":100,"./sdp/unifiedPlanUtils":102,"sdp-transform":115}],96:[function(require,module,exports){
+},{"../Logger":78,"../errors":83,"../ortc":105,"../scalabilityModes":106,"../utils":108,"./HandlerInterface":92,"./ortc/utils":98,"./sdp/RemoteSdp":100,"./sdp/commonUtils":101,"./sdp/unifiedPlanUtils":103,"sdp-transform":116}],97:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -29132,7 +29440,7 @@ function mangleRtpParameters(rtpParameters) {
     return params;
 }
 
-},{"../../utils":107}],97:[function(require,module,exports){
+},{"../../utils":108}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addNackSuppportForOpus = addNackSuppportForOpus;
@@ -29152,7 +29460,7 @@ function addNackSuppportForOpus(rtpCapabilities) {
     }
 }
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -29726,7 +30034,7 @@ function getCodecName(codec) {
     return mimeTypeMatch[2];
 }
 
-},{"../../utils":107,"sdp-transform":115}],99:[function(require,module,exports){
+},{"../../utils":108,"sdp-transform":116}],100:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -30029,7 +30337,7 @@ class RemoteSdp {
 }
 exports.RemoteSdp = RemoteSdp;
 
-},{"../../Logger":77,"./MediaSection":98,"sdp-transform":115}],100:[function(require,module,exports){
+},{"../../Logger":78,"./MediaSection":99,"sdp-transform":116}],101:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -30259,7 +30567,7 @@ function applyCodecParameters({ offerRtpParameters, answerMediaObject, }) {
     }
 }
 
-},{"sdp-transform":115}],101:[function(require,module,exports){
+},{"sdp-transform":116}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRtpEncodings = getRtpEncodings;
@@ -30412,7 +30720,7 @@ function addLegacySimulcast({ offerMediaObject, track, numStreams, }) {
     }
 }
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRtpEncodings = getRtpEncodings;
@@ -30541,7 +30849,7 @@ function addLegacySimulcast({ offerMediaObject, numStreams, }) {
     }
 }
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -30588,7 +30896,7 @@ exports.version = '3.7.12';
 var scalabilityModes_1 = require("./scalabilityModes");
 Object.defineProperty(exports, "parseScalabilityMode", { enumerable: true, get: function () { return scalabilityModes_1.parse; } });
 
-},{"./Device":75,"./scalabilityModes":105,"./types":106,"debug":47}],104:[function(require,module,exports){
+},{"./Device":76,"./scalabilityModes":106,"./types":107,"debug":48}],105:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -31494,7 +31802,7 @@ function reduceRtcpFeedback(codecA, codecB) {
     return reducedRtcpFeedback;
 }
 
-},{"./utils":107,"h264-profile-level-id":70}],105:[function(require,module,exports){
+},{"./utils":108,"h264-profile-level-id":71}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = parse;
@@ -31515,7 +31823,7 @@ function parse(scalabilityMode) {
     }
 }
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -31543,7 +31851,7 @@ __exportStar(require("./SctpParameters"), exports);
 __exportStar(require("./handlers/HandlerInterface"), exports);
 __exportStar(require("./errors"), exports);
 
-},{"./Consumer":72,"./DataConsumer":73,"./DataProducer":74,"./Device":75,"./Producer":78,"./RtpParameters":79,"./SctpParameters":80,"./Transport":81,"./errors":82,"./handlers/HandlerInterface":91}],107:[function(require,module,exports){
+},{"./Consumer":73,"./DataConsumer":74,"./DataProducer":75,"./Device":76,"./Producer":79,"./RtpParameters":80,"./SctpParameters":81,"./Transport":82,"./errors":83,"./handlers/HandlerInterface":92}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clone = clone;
@@ -31590,7 +31898,7 @@ function deepFreeze(object) {
     return Object.freeze(object);
 }
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -31754,7 +32062,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -32253,7 +32561,7 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module.exports=[
 	"Bulbasaur",
 	"Ivysaur",
@@ -33282,7 +33590,7 @@ module.exports=[
 	"Pecharunt"
 ]
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 'use strict';
 const uniqueRandomArray = require('unique-random-array');
 const pokemon = require('./data/en.json');
@@ -33355,7 +33663,7 @@ exports.getId = (name, language = 'en') => {
 
 exports.languages = languages;
 
-},{"./data/en.json":110,"unique-random-array":128}],112:[function(require,module,exports){
+},{"./data/en.json":111,"unique-random-array":129}],113:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -33541,7 +33849,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 (function (global){(function (){
 /*! queue-microtask. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 let promise
@@ -33554,7 +33862,7 @@ module.exports = typeof queueMicrotask === 'function'
     .catch(err => setTimeout(() => { throw err }, 0))
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 var grammar = module.exports = {
   v: [{
     name: 'version',
@@ -34050,7 +34358,7 @@ Object.keys(grammar).forEach(function (key) {
   });
 });
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var parser = require('./parser');
 var writer = require('./writer');
 
@@ -34063,7 +34371,7 @@ exports.parseRemoteCandidates = parser.parseRemoteCandidates;
 exports.parseImageAttributes = parser.parseImageAttributes;
 exports.parseSimulcastStreamList = parser.parseSimulcastStreamList;
 
-},{"./parser":116,"./writer":117}],116:[function(require,module,exports){
+},{"./parser":117,"./writer":118}],117:[function(require,module,exports){
 var toIntIfInt = function (v) {
   return String(Number(v)) === v ? Number(v) : v;
 };
@@ -34189,7 +34497,7 @@ exports.parseSimulcastStreamList = function (str) {
   });
 };
 
-},{"./grammar":114}],117:[function(require,module,exports){
+},{"./grammar":115}],118:[function(require,module,exports){
 var grammar = require('./grammar');
 
 // customized util.format - discards excess arguments and can void middle ones
@@ -34305,7 +34613,7 @@ module.exports = function (session, opts) {
   return sdp.join('\r\n') + '\r\n';
 };
 
-},{"./grammar":114}],118:[function(require,module,exports){
+},{"./grammar":115}],119:[function(require,module,exports){
 "use strict";
 /**
  * Initialize backoff timer with `opts`.
@@ -34377,7 +34685,7 @@ Backoff.prototype.setJitter = function (jitter) {
     this.jitter = jitter;
 };
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -34448,7 +34756,7 @@ Object.defineProperty(exports, "protocol", { enumerable: true, get: function () 
 
 module.exports = lookup;
 
-},{"./manager.js":120,"./socket.js":122,"./url.js":123,"debug":47,"socket.io-parser":125}],120:[function(require,module,exports){
+},{"./manager.js":121,"./socket.js":123,"./url.js":124,"debug":48,"socket.io-parser":126}],121:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -34853,7 +35161,7 @@ class Manager extends component_emitter_1.Emitter {
 }
 exports.Manager = Manager;
 
-},{"./contrib/backo2.js":118,"./on.js":121,"./socket.js":122,"@socket.io/component-emitter":39,"debug":47,"engine.io-client":54,"socket.io-parser":125}],121:[function(require,module,exports){
+},{"./contrib/backo2.js":119,"./on.js":122,"./socket.js":123,"@socket.io/component-emitter":40,"debug":48,"engine.io-client":55,"socket.io-parser":126}],122:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -34865,7 +35173,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -35777,7 +36085,7 @@ class Socket extends component_emitter_1.Emitter {
 }
 exports.Socket = Socket;
 
-},{"./on.js":121,"@socket.io/component-emitter":39,"debug":47,"socket.io-parser":125}],123:[function(require,module,exports){
+},{"./on.js":122,"@socket.io/component-emitter":40,"debug":48,"socket.io-parser":126}],124:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -35849,7 +36157,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":47,"engine.io-client":54}],124:[function(require,module,exports){
+},{"debug":48,"engine.io-client":55}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -35939,7 +36247,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary.js":126}],125:[function(require,module,exports){
+},{"./is-binary.js":127}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -36262,7 +36570,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary.js":124,"./is-binary.js":126,"@socket.io/component-emitter":39,"debug":47}],126:[function(require,module,exports){
+},{"./binary.js":125,"./is-binary.js":127,"@socket.io/component-emitter":40,"debug":48}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -36319,7 +36627,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 /////////////////////////////////////////////////////////////////////////////////
 /* UAParser.js v1.0.38
    Copyright © 2012-2021 Faisal Salman <f@faisalman.com>
@@ -37274,7 +37582,7 @@ exports.hasBinary = hasBinary;
 
 })(typeof window === 'object' ? window : this);
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 'use strict';
 const uniqueRandom = require('unique-random');
 
@@ -37283,7 +37591,7 @@ module.exports = array => {
 	return () => array[random()];
 };
 
-},{"unique-random":129}],129:[function(require,module,exports){
+},{"unique-random":130}],130:[function(require,module,exports){
 'use strict';
 
 module.exports = (minimum, maximum) => {
@@ -37297,7 +37605,7 @@ module.exports = (minimum, maximum) => {
 	};
 };
 
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -37351,7 +37659,7 @@ var Logger = exports.Logger = /*#__PURE__*/function () {
   }]);
 }();
 
-},{"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/interopRequireDefault":29,"debug":47}],131:[function(require,module,exports){
+},{"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/interopRequireDefault":30,"debug":48}],132:[function(require,module,exports){
 (function (process){(function (){
 "use strict";
 
@@ -38972,7 +39280,7 @@ var P2pSdk = exports.P2pSdk = /*#__PURE__*/function (_EventEmitter) {
 }(_events.EventEmitter);
 
 }).call(this)}).call(this,require('_process'))
-},{"../utils/getAudioVideoInputs.js":134,"../utils/getDeviceId.js":135,"../utils/getRandomInt.js":136,"../utils/gumConstraints.js":137,"../utils/sleep.js":138,"../utils/uuidv4.js":139,"./Logger.js":130,"./SocketTransport.js":132,"./platform.js":133,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/defineProperty":26,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38,"_process":112,"events":45}],132:[function(require,module,exports){
+},{"../utils/getAudioVideoInputs.js":135,"../utils/getDeviceId.js":136,"../utils/getRandomInt.js":137,"../utils/gumConstraints.js":138,"../utils/sleep.js":139,"../utils/uuidv4.js":140,"./Logger.js":131,"./SocketTransport.js":133,"./platform.js":134,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/defineProperty":27,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39,"_process":113,"events":46}],133:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -39164,7 +39472,7 @@ var SocketTransport = exports.SocketTransport = /*#__PURE__*/function (_EventEmi
   }]);
 }(_events.EventEmitter);
 
-},{"./Logger.js":130,"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/classCallCheck":24,"@babel/runtime/helpers/createClass":25,"@babel/runtime/helpers/getPrototypeOf":27,"@babel/runtime/helpers/inherits":28,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/possibleConstructorReturn":32,"@babel/runtime/regenerator":38,"events":45}],133:[function(require,module,exports){
+},{"./Logger.js":131,"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/classCallCheck":25,"@babel/runtime/helpers/createClass":26,"@babel/runtime/helpers/getPrototypeOf":28,"@babel/runtime/helpers/inherits":29,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":39,"events":46}],134:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
@@ -40331,7 +40639,7 @@ var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
 }).call(void 0);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/helpers/typeof":37}],134:[function(require,module,exports){
+},{"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/helpers/typeof":38}],135:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -40449,7 +40757,7 @@ var updatedDeviceList = exports.updatedDeviceList = /*#__PURE__*/function () {
   };
 }();
 
-},{"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38}],135:[function(require,module,exports){
+},{"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39}],136:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -40497,9 +40805,9 @@ var getDeviceId = exports.getDeviceId = function getDeviceId(label) {
   });
 };
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],137:[function(require,module,exports){
+},{"dup":14}],138:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -40556,9 +40864,9 @@ var avConstraints = exports.avConstraints = {
   }
 };
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"@babel/runtime/helpers/asyncToGenerator":23,"@babel/runtime/helpers/interopRequireDefault":29,"@babel/runtime/regenerator":38,"dup":19}],139:[function(require,module,exports){
+},{"@babel/runtime/helpers/asyncToGenerator":24,"@babel/runtime/helpers/interopRequireDefault":30,"@babel/runtime/regenerator":39,"dup":19}],140:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
 },{"dup":20}]},{},[1])(1)
 });

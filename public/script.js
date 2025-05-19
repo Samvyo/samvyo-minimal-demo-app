@@ -303,10 +303,15 @@ document
           console.log(`Recording has been ended on this room at`);
           alert(`Recording has been ended on the room at`);
         });
-
+         vidScaleClient.on("processingCompleted", (details) => {
+          console.log(`Processing has been completed`,details);
+          alert(`Processing has been completed on the room at`);
+          document.getElementById("processVideosButton").disabled = false;
+        });
         document.getElementById("leaveButton").disabled = false;
         document.getElementById("recordingStartButton").disabled = false;
         document.getElementById("recordingStopButton").disabled = false;
+        document.getElementById("processVideosButton").disabled = false;
         document.getElementById("joinButton").disabled = true;
 
       } catch (error) {
@@ -324,6 +329,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("recordingStartButton").disabled = true;
         document.getElementById("recordingStopButton").disabled = true;
+        document.getElementById("processVideosButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
@@ -332,7 +338,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
 
 document.getElementById("recordingStartButton").addEventListener("click", async () => {
   if (vidScaleClient) {
-    await vidScaleClient.startRecording({recordingType:"av",outputType:"mp4"});
+    await vidScaleClient.startRecording({recordingType:"av"});
     console.log("Recording started");
     // document.getElementById("leaveButton").disabled = true;
     document.getElementById("recordingStartButton").disabled = true;
@@ -350,6 +356,18 @@ document.getElementById("recordingStopButton").addEventListener("click", async (
     // document.getElementById("leaveButton").disabled = true;
     document.getElementById("recordingStartButton").disabled = false;
         document.getElementById("recordingStopButton").disabled = true;
+    // document.getElementById("joinButton").disabled = false;
+    // removeAllPeers(); //removes the peerList div upon leaving the room
+    // showThankYouMessage();
+  }
+});
+
+document.getElementById("processVideosButton").addEventListener("click", async () => {
+  if (vidScaleClient) {
+    await vidScaleClient.startProcessing({inputFiles:[{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/room12345-13-5-2025-16-43-47/room12345-record-13-5-2025-16-44-30.mp4",type:"mp4"}],cloud:"do",region:"sgp1",bucket:"cvr-org-823047296136-1"});
+    console.log("Processing Videos Started");
+    // document.getElementById("leaveButton").disabled = true;
+    document.getElementById("processVideosButton").disabled = true;
     // document.getElementById("joinButton").disabled = false;
     // removeAllPeers(); //removes the peerList div upon leaving the room
     // showThankYouMessage();
