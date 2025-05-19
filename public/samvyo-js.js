@@ -245,7 +245,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               _this._enableSharingLayers = Boolean(enableSharingLayers);
               _context.prev = 33;
               if (!peerName) peerName = (0, _randomName["default"])();
-              _this.data.inputParams = {
+              _this.data.inputParams = _objectSpread(_objectSpread({}, _this.data.inputParams), {}, {
                 peerName: peerName,
                 produce: produce,
                 produceAudio: produceAudio,
@@ -278,7 +278,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                 authenticationRequired: authenticationRequired,
                 password: password,
                 roomDisplayName: roomDisplayName
-              };
+              });
               message = {
                 id: "joinRoom",
                 type: "r",
@@ -1540,7 +1540,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
     value: function () {
       var _initSocket2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee19() {
         var _this2 = this;
-        var globalThis, socketAddress;
+        var globalThis, signallingUrl, socketAddress;
         return _regenerator["default"].wrap(function _callee19$(_context19) {
           while (1) switch (_context19.prev = _context19.next) {
             case 0:
@@ -1552,8 +1552,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               //     browserVersion: this._client.browser.version,
               //     os: this._client.os.name,
               //   });
-              socketAddress = "wss://".concat("localhost:4300", "/?sessionToken=", this.data.innerSessionToken, "&roomId=").concat(this.data.inputParams.roomId, "&peerId=").concat(this.data.inputParams.peerId, "&roomType=").concat(this.data.inputParams.roomType);
-              logger.info("Going to create a new socket! with address: ".concat("localhost:4300"));
+              signallingUrl = this.data.signallingServerUrl.replace(/^(http|https):\/\//, "");
+              socketAddress = "wss://".concat("".concat(signallingUrl), "/?sessionToken=", this.data.sessionToken, "&roomId=").concat(this.data.inputParams.roomId, "&peerId=").concat(this.data.inputParams.peerId, "&roomType=").concat(this.data.inputParams.roomType);
+              logger.info("Going to create a new socket! with address: ".concat(signallingUrl));
               this._socket = new _socket.WebSocketTransport(socketAddress, true);
               this._listenToSocket();
               this._socket.on("notify", function (_ref23) {
@@ -1669,7 +1670,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   return _ref27.apply(this, arguments);
                 };
               }());
-            case 14:
+            case 15:
             case "end":
               return _context19.stop();
           }
@@ -3786,6 +3787,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               if (!peerId) peerId = (0, _uuidv.uuidv4)();
               if (!roomId) roomId = (0, _getRandomInt.getRandomInt)();
               outputData = {
+                sessionToken: sessionToken,
                 innerSessionToken: innerSessionToken,
                 signallingServerUrl: signallingServerUrl
               };
