@@ -118,202 +118,265 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
       outputData = _ref.outputData;
     (0, _classCallCheck2["default"])(this, JsSdk);
     _this = _callSuper(this, JsSdk);
-    (0, _defineProperty2["default"])(_this, "joinRoom", /*#__PURE__*/function () {
-      var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(_ref2) {
-        var peerName, _ref2$produce, produce, _ref2$produceAudio, produceAudio, _ref2$produceVideo, produceVideo, _ref2$consume, consume, _ref2$videoResolution, videoResolution, _ref2$forceVp, forceVp8, _ref2$forceVp2, forceVp9, _ref2$forceH, forceH264, _ref2$h264Profile, h264Profile, _ref2$forcePCMU, forcePCMU, _ref2$forcePCMA, forcePCMA, _ref2$forceFPS, forceFPS, _ref2$enableWebcamLay, enableWebcamLayers, _ref2$numSimulcastStr, numSimulcastStreams, _ref2$autoGainControl, autoGainControl, _ref2$echoCancellatio, echoCancellation, _ref2$noiseSuppressio, noiseSuppression, _ref2$sampleRate, sampleRate, _ref2$channelCount, channelCount, _ref2$videoBitRates, videoBitRates, _ref2$share, share, _ref2$shareAudio, shareAudio, _ref2$enableSharingLa, enableSharingLayers, _ref2$shareBitRates, shareBitRates, _ref2$audioDeviceId, audioDeviceId, _ref2$videoDeviceId, videoDeviceId, _ref2$peerType, peerType, _ref2$roomType, roomType, _ref2$authenticationR, authenticationRequired, _ref2$password, password, roomDisplayName, message;
-        return _regenerator["default"].wrap(function _callee$(_context) {
-          while (1) switch (_context.prev = _context.next) {
-            case 0:
-              peerName = _ref2.peerName, _ref2$produce = _ref2.produce, produce = _ref2$produce === void 0 ? true : _ref2$produce, _ref2$produceAudio = _ref2.produceAudio, produceAudio = _ref2$produceAudio === void 0 ? true : _ref2$produceAudio, _ref2$produceVideo = _ref2.produceVideo, produceVideo = _ref2$produceVideo === void 0 ? true : _ref2$produceVideo, _ref2$consume = _ref2.consume, consume = _ref2$consume === void 0 ? true : _ref2$consume, _ref2$videoResolution = _ref2.videoResolution, videoResolution = _ref2$videoResolution === void 0 ? "hd" : _ref2$videoResolution, _ref2$forceVp = _ref2.forceVp8, forceVp8 = _ref2$forceVp === void 0 ? false : _ref2$forceVp, _ref2$forceVp2 = _ref2.forceVp9, forceVp9 = _ref2$forceVp2 === void 0 ? false : _ref2$forceVp2, _ref2$forceH = _ref2.forceH264, forceH264 = _ref2$forceH === void 0 ? false : _ref2$forceH, _ref2$h264Profile = _ref2.h264Profile, h264Profile = _ref2$h264Profile === void 0 ? "high" : _ref2$h264Profile, _ref2$forcePCMU = _ref2.forcePCMU, forcePCMU = _ref2$forcePCMU === void 0 ? false : _ref2$forcePCMU, _ref2$forcePCMA = _ref2.forcePCMA, forcePCMA = _ref2$forcePCMA === void 0 ? false : _ref2$forcePCMA, _ref2$forceFPS = _ref2.forceFPS, forceFPS = _ref2$forceFPS === void 0 ? 25 : _ref2$forceFPS, _ref2$enableWebcamLay = _ref2.enableWebcamLayers, enableWebcamLayers = _ref2$enableWebcamLay === void 0 ? true : _ref2$enableWebcamLay, _ref2$numSimulcastStr = _ref2.numSimulcastStreams, numSimulcastStreams = _ref2$numSimulcastStr === void 0 ? 3 : _ref2$numSimulcastStr, _ref2$autoGainControl = _ref2.autoGainControl, autoGainControl = _ref2$autoGainControl === void 0 ? true : _ref2$autoGainControl, _ref2$echoCancellatio = _ref2.echoCancellation, echoCancellation = _ref2$echoCancellatio === void 0 ? true : _ref2$echoCancellatio, _ref2$noiseSuppressio = _ref2.noiseSuppression, noiseSuppression = _ref2$noiseSuppressio === void 0 ? true : _ref2$noiseSuppressio, _ref2$sampleRate = _ref2.sampleRate, sampleRate = _ref2$sampleRate === void 0 ? 44000 : _ref2$sampleRate, _ref2$channelCount = _ref2.channelCount, channelCount = _ref2$channelCount === void 0 ? 1 : _ref2$channelCount, _ref2$videoBitRates = _ref2.videoBitRates, videoBitRates = _ref2$videoBitRates === void 0 ? [700, 250, 75] : _ref2$videoBitRates, _ref2$share = _ref2.share, share = _ref2$share === void 0 ? false : _ref2$share, _ref2$shareAudio = _ref2.shareAudio, shareAudio = _ref2$shareAudio === void 0 ? false : _ref2$shareAudio, _ref2$enableSharingLa = _ref2.enableSharingLayers, enableSharingLayers = _ref2$enableSharingLa === void 0 ? true : _ref2$enableSharingLa, _ref2$shareBitRates = _ref2.shareBitRates, shareBitRates = _ref2$shareBitRates === void 0 ? [2500, 1250, 500] : _ref2$shareBitRates, _ref2$audioDeviceId = _ref2.audioDeviceId, audioDeviceId = _ref2$audioDeviceId === void 0 ? null : _ref2$audioDeviceId, _ref2$videoDeviceId = _ref2.videoDeviceId, videoDeviceId = _ref2$videoDeviceId === void 0 ? null : _ref2$videoDeviceId, _ref2$peerType = _ref2.peerType, peerType = _ref2$peerType === void 0 ? "participant" : _ref2$peerType, _ref2$roomType = _ref2.roomType, roomType = _ref2$roomType === void 0 ? _constants._security.roomType.CONFERENCING : _ref2$roomType, _ref2$authenticationR = _ref2.authenticationRequired, authenticationRequired = _ref2$authenticationR === void 0 ? false : _ref2$authenticationR, _ref2$password = _ref2.password, password = _ref2$password === void 0 ? null : _ref2$password, roomDisplayName = _ref2.roomDisplayName;
-              if (!["hd", "vga", "qvga"].includes(videoResolution)) {
-                logger.warn("Invalid video resolution value. setting it to default value of 'hd' ");
-                videoResolution = "hd";
-              }
-              if (typeof produce !== "boolean") {
-                logger.warn("Produe should either be true or false");
-                produce = Boolean(produce);
-              }
-              if (typeof produceAudio !== "boolean") {
-                logger.warn("ProduceAudio should either be true or false");
-                produceAudio = Boolean(produceAudio);
-              }
-              if (typeof produceVideo !== "boolean") {
-                logger.warn("ProduceVideo should either be true or false");
-                produceVideo = Boolean(produceVideo);
-              }
-              if (typeof consume !== "boolean") {
-                logger.warn("Consume should either be true or false");
-                consume = Boolean(consume);
-              }
-              if (typeof forceVp8 !== "boolean") {
-                logger.warn("forceVp8 should either be true or false");
-                forceVp8 = Boolean(forceVp8);
-              }
-              if (typeof forceVp9 !== "boolean") {
-                logger.warn("forceVp9 should either be true or false");
-                forceVp9 = Boolean(forceVp9);
-              }
-              if (typeof forceH264 !== "boolean") {
-                logger.warn("forceH264 should either be true or false");
-                forceH264 = Boolean(forceH264);
-              }
-              if (!["high", "low"].includes(h264Profile.toLowerCase())) {
-                logger.warn("h264Profile should either be 'high' or 'low'");
-                h264Profile = "high";
-              }
-              if (!Number.isInteger(forceFPS) || Number.isInteger(forceFPS) && (forceFPS > 65 || forceFPS < 5)) {
-                logger.warn("forceFPS should be a number between 5 to 65, default value is 25 fps.");
-                forceFPS = 25;
-              }
-              if (typeof enableWebcamLayers !== "boolean") {
-                logger.warn("enableWebcamLayers should either be true or false");
-                enableWebcamLayers = Boolean(enableWebcamLayers);
-              }
-              if (!Number.isInteger(numSimulcastStreams) || Number.isInteger(numSimulcastStreams) && (numSimulcastStreams > 3 || numSimulcastStreams < 1)) {
-                logger.warn("numSimulcastStreams should be a number between 1 to 3, default value is 3.");
-                numSimulcastStreams = 3;
-              }
-              if (Array.isArray(videoBitRates) && videoBitRates.length >= 1 && videoBitRates.length <= 3 && videoBitRates.every(function (i) {
-                return Number.isInteger(i) && i >= 75 && i <= 800;
-              })) {
-                logger.debug("videoBitRates values are correct");
-              } else {
-                logger.warn("videobitrates values should be an integer array with maximum 3 elements and minimum 1 element. The values in the array are '[700,250,75]'");
-                videoBitRates = [700, 250, 75];
-              }
-              if (typeof forcePCMU !== "boolean") {
-                logger.warn("forcePCMU should either be true or false");
-                forcePCMU = Boolean(forcePCMU);
-              }
-              if (typeof forcePCMA !== "boolean") {
-                logger.warn("forcePCMA should either be true or false");
-                forcePCMA = Boolean(forcePCMA);
-              }
-              if (typeof autoGainControl !== "boolean") {
-                logger.warn("autoGainControl should either be true or false");
-                autoGainControl = Boolean(autoGainControl);
-              }
-              if (typeof echoCancellation !== "boolean") {
-                logger.warn("echoCancellation should either be true or false");
-                echoCancellation = Boolean(echoCancellation);
-              }
-              if (typeof noiseSuppression !== "boolean") {
-                logger.warn("noiseSuppression should either be true or false");
-                noiseSuppression = Boolean(noiseSuppression);
-              }
-              if (!Number.isInteger(sampleRate) || Number.isInteger(sampleRate) && (sampleRate > 64000 || sampleRate < 8000)) {
-                logger.warn("sampleRate should be a number between 8000 to 64000, default value is 44000 Khz.");
-                sampleRate = 44000;
-              }
-              if (!Number.isInteger(channelCount) || Number.isInteger(channelCount) && (channelCount > 2 || channelCount < 1)) {
-                logger.warn("sampleRate should be a number between 1 to 2, default value is 1, which is a mono audio.");
-                channelCount = 1;
-              }
-              if (typeof share !== "boolean") {
-                logger.warn("share should either be true or false");
-                share = Boolean(share);
-              }
-              if (typeof shareAudio !== "boolean") {
-                logger.warn("shareAudio should either be true or false");
-                shareAudio = Boolean(shareAudio);
-              }
-              if (typeof enableSharingLayers !== "boolean") {
-                logger.warn("enableSharingLayers should either be true or false");
-                enableSharingLayers = Boolean(enableSharingLayers);
-              }
-              if (Array.isArray(shareBitRates) && shareBitRates.length >= 1 && shareBitRates.length <= 3 && shareBitRates.every(function (i) {
-                return Number.isInteger(i) && i >= 500 && i <= 2500;
-              })) {
-                logger.debug("shareBitRates values are correct");
-              } else {
-                logger.warn("sharebitrates values should be an integer array with maximum 3 elements and minimum 1 element. The values in the array are '[2500,1250,500]'");
-                shareBitRates = [2500, 1250, 500];
-              }
-              if (["moderator", "participant", "attendee"].includes(peerType)) {
-                logger.debug("peerType is valid:%s", peerType);
-              } else {
-                peerType = "participant";
-                logger.debug("peerType is invalid:%s. By default set to: participant", peerType);
-              }
-              _this._videoResolution = videoResolution;
-              _this._forceVP8 = Boolean(forceVp8);
-              _this._forceH264 = Boolean(forceH264);
-              _this._forceVP9 = Boolean(forceVp9);
-              _this._enableWebcamLayers = Boolean(enableWebcamLayers);
-              _this._numSimulcastStreams = numSimulcastStreams;
-              _this._enableSharingLayers = Boolean(enableSharingLayers);
-              _context.prev = 33;
-              if (!peerName) peerName = (0, _randomName["default"])();
-              _this.data.inputParams = _objectSpread(_objectSpread({}, _this.data.inputParams), {}, {
-                peerName: peerName,
-                produce: produce,
-                produceAudio: produceAudio,
-                produceVideo: produceVideo,
-                consume: consume,
-                videoResolution: videoResolution,
-                forceVp8: forceVp8,
-                forceVp9: forceVp9,
-                forceH264: forceH264,
-                h264Profile: h264Profile,
-                forceFPS: forceFPS,
-                forcePCMU: forcePCMU,
-                forcePCMA: forcePCMA,
-                enableWebcamLayers: enableWebcamLayers,
-                numSimulcastStreams: numSimulcastStreams,
-                autoGainControl: autoGainControl,
-                echoCancellation: echoCancellation,
-                noiseSuppression: noiseSuppression,
-                sampleRate: sampleRate,
-                channelCount: channelCount,
-                videoBitRates: videoBitRates,
-                share: share,
-                shareAudio: shareAudio,
-                enableSharingLayers: enableSharingLayers,
-                shareBitRates: shareBitRates,
-                audioDeviceId: audioDeviceId,
-                videoDeviceId: videoDeviceId,
-                peerType: peerType,
-                roomType: roomType,
-                authenticationRequired: authenticationRequired,
-                password: password,
-                roomDisplayName: roomDisplayName
-              });
-              message = {
-                id: "joinRoom",
-                type: "r",
-                peerId: _this.data.inputParams.peerId,
-                participantType: peerType === "attendee" ? "viewer" : peerType,
-                roomType: roomType,
-                roomDisplayName: roomDisplayName || "room-".concat(100000 + Math.round(Math.random() * 900000)),
-                browser: _this._client,
-                name: _this.data.inputParams.peerName,
-                room: _this.data.inputParams.roomId,
-                authenticationRequired: authenticationRequired,
-                isRoomPassword: password ? true : false,
-                roomPassword: password || null,
-                usageType: "sdk"
-              };
-              _this._sendMessage(message);
-              _context.next = 44;
-              break;
-            case 40:
-              _context.prev = 40;
-              _context.t0 = _context["catch"](33);
-              logger.error("Failed to join room:", _context.t0.message);
-              return _context.abrupt("return", {
-                success: false,
-                reason: _context.t0.message
-              });
-            case 44:
-            case "end":
-              return _context.stop();
-          }
-        }, _callee, null, [[33, 40]]);
-      }));
-      return function (_x) {
-        return _ref3.apply(this, arguments);
-      };
-    }());
+    (0, _defineProperty2["default"])(_this, "joinRoom", /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
+      var _ref3,
+        _ref3$peerName,
+        peerName,
+        _ref3$produce,
+        produce,
+        _ref3$produceAudio,
+        produceAudio,
+        _ref3$produceVideo,
+        produceVideo,
+        _ref3$consume,
+        consume,
+        _ref3$videoResolution,
+        videoResolution,
+        _ref3$forceVp,
+        forceVp8,
+        _ref3$forceVp2,
+        forceVp9,
+        _ref3$forceH,
+        forceH264,
+        _ref3$h264Profile,
+        h264Profile,
+        _ref3$forcePCMU,
+        forcePCMU,
+        _ref3$forcePCMA,
+        forcePCMA,
+        _ref3$forceFPS,
+        forceFPS,
+        _ref3$enableWebcamLay,
+        enableWebcamLayers,
+        _ref3$numSimulcastStr,
+        numSimulcastStreams,
+        _ref3$autoGainControl,
+        autoGainControl,
+        _ref3$echoCancellatio,
+        echoCancellation,
+        _ref3$noiseSuppressio,
+        noiseSuppression,
+        _ref3$sampleRate,
+        sampleRate,
+        _ref3$channelCount,
+        channelCount,
+        _ref3$videoBitRates,
+        videoBitRates,
+        _ref3$share,
+        share,
+        _ref3$shareAudio,
+        shareAudio,
+        _ref3$enableSharingLa,
+        enableSharingLayers,
+        _ref3$shareBitRates,
+        shareBitRates,
+        _ref3$audioDeviceId,
+        audioDeviceId,
+        _ref3$videoDeviceId,
+        videoDeviceId,
+        _ref3$peerType,
+        peerType,
+        _ref3$roomType,
+        roomType,
+        _ref3$authenticationR,
+        authenticationRequired,
+        _ref3$password,
+        password,
+        _ref3$roomDisplayName,
+        roomDisplayName,
+        message,
+        _args = arguments;
+      return _regenerator["default"].wrap(function _callee$(_context) {
+        while (1) switch (_context.prev = _context.next) {
+          case 0:
+            _ref3 = _args.length > 0 && _args[0] !== undefined ? _args[0] : {}, _ref3$peerName = _ref3.peerName, peerName = _ref3$peerName === void 0 ? null : _ref3$peerName, _ref3$produce = _ref3.produce, produce = _ref3$produce === void 0 ? true : _ref3$produce, _ref3$produceAudio = _ref3.produceAudio, produceAudio = _ref3$produceAudio === void 0 ? true : _ref3$produceAudio, _ref3$produceVideo = _ref3.produceVideo, produceVideo = _ref3$produceVideo === void 0 ? true : _ref3$produceVideo, _ref3$consume = _ref3.consume, consume = _ref3$consume === void 0 ? true : _ref3$consume, _ref3$videoResolution = _ref3.videoResolution, videoResolution = _ref3$videoResolution === void 0 ? "hd" : _ref3$videoResolution, _ref3$forceVp = _ref3.forceVp8, forceVp8 = _ref3$forceVp === void 0 ? false : _ref3$forceVp, _ref3$forceVp2 = _ref3.forceVp9, forceVp9 = _ref3$forceVp2 === void 0 ? false : _ref3$forceVp2, _ref3$forceH = _ref3.forceH264, forceH264 = _ref3$forceH === void 0 ? false : _ref3$forceH, _ref3$h264Profile = _ref3.h264Profile, h264Profile = _ref3$h264Profile === void 0 ? "high" : _ref3$h264Profile, _ref3$forcePCMU = _ref3.forcePCMU, forcePCMU = _ref3$forcePCMU === void 0 ? false : _ref3$forcePCMU, _ref3$forcePCMA = _ref3.forcePCMA, forcePCMA = _ref3$forcePCMA === void 0 ? false : _ref3$forcePCMA, _ref3$forceFPS = _ref3.forceFPS, forceFPS = _ref3$forceFPS === void 0 ? 25 : _ref3$forceFPS, _ref3$enableWebcamLay = _ref3.enableWebcamLayers, enableWebcamLayers = _ref3$enableWebcamLay === void 0 ? true : _ref3$enableWebcamLay, _ref3$numSimulcastStr = _ref3.numSimulcastStreams, numSimulcastStreams = _ref3$numSimulcastStr === void 0 ? 3 : _ref3$numSimulcastStr, _ref3$autoGainControl = _ref3.autoGainControl, autoGainControl = _ref3$autoGainControl === void 0 ? true : _ref3$autoGainControl, _ref3$echoCancellatio = _ref3.echoCancellation, echoCancellation = _ref3$echoCancellatio === void 0 ? true : _ref3$echoCancellatio, _ref3$noiseSuppressio = _ref3.noiseSuppression, noiseSuppression = _ref3$noiseSuppressio === void 0 ? true : _ref3$noiseSuppressio, _ref3$sampleRate = _ref3.sampleRate, sampleRate = _ref3$sampleRate === void 0 ? 44000 : _ref3$sampleRate, _ref3$channelCount = _ref3.channelCount, channelCount = _ref3$channelCount === void 0 ? 1 : _ref3$channelCount, _ref3$videoBitRates = _ref3.videoBitRates, videoBitRates = _ref3$videoBitRates === void 0 ? [700, 250, 75] : _ref3$videoBitRates, _ref3$share = _ref3.share, share = _ref3$share === void 0 ? false : _ref3$share, _ref3$shareAudio = _ref3.shareAudio, shareAudio = _ref3$shareAudio === void 0 ? false : _ref3$shareAudio, _ref3$enableSharingLa = _ref3.enableSharingLayers, enableSharingLayers = _ref3$enableSharingLa === void 0 ? true : _ref3$enableSharingLa, _ref3$shareBitRates = _ref3.shareBitRates, shareBitRates = _ref3$shareBitRates === void 0 ? [2500, 1250, 500] : _ref3$shareBitRates, _ref3$audioDeviceId = _ref3.audioDeviceId, audioDeviceId = _ref3$audioDeviceId === void 0 ? null : _ref3$audioDeviceId, _ref3$videoDeviceId = _ref3.videoDeviceId, videoDeviceId = _ref3$videoDeviceId === void 0 ? null : _ref3$videoDeviceId, _ref3$peerType = _ref3.peerType, peerType = _ref3$peerType === void 0 ? "participant" : _ref3$peerType, _ref3$roomType = _ref3.roomType, roomType = _ref3$roomType === void 0 ? _constants._security.roomType.CONFERENCING : _ref3$roomType, _ref3$authenticationR = _ref3.authenticationRequired, authenticationRequired = _ref3$authenticationR === void 0 ? false : _ref3$authenticationR, _ref3$password = _ref3.password, password = _ref3$password === void 0 ? null : _ref3$password, _ref3$roomDisplayName = _ref3.roomDisplayName, roomDisplayName = _ref3$roomDisplayName === void 0 ? null : _ref3$roomDisplayName;
+            logger.info("Going to join room");
+            if (!["hd", "vga", "qvga"].includes(videoResolution)) {
+              logger.warn("Invalid video resolution value. setting it to default value of 'hd' ");
+              videoResolution = "hd";
+            }
+            if (typeof produce !== "boolean") {
+              logger.warn("Produe should either be true or false");
+              produce = Boolean(produce);
+            }
+            if (typeof produceAudio !== "boolean") {
+              logger.warn("ProduceAudio should either be true or false");
+              produceAudio = Boolean(produceAudio);
+            }
+            if (typeof produceVideo !== "boolean") {
+              logger.warn("ProduceVideo should either be true or false");
+              produceVideo = Boolean(produceVideo);
+            }
+            if (typeof consume !== "boolean") {
+              logger.warn("Consume should either be true or false");
+              consume = Boolean(consume);
+            }
+            if (typeof forceVp8 !== "boolean") {
+              logger.warn("forceVp8 should either be true or false");
+              forceVp8 = Boolean(forceVp8);
+            }
+            if (typeof forceVp9 !== "boolean") {
+              logger.warn("forceVp9 should either be true or false");
+              forceVp9 = Boolean(forceVp9);
+            }
+            if (typeof forceH264 !== "boolean") {
+              logger.warn("forceH264 should either be true or false");
+              forceH264 = Boolean(forceH264);
+            }
+            if (!["high", "low"].includes(h264Profile.toLowerCase())) {
+              logger.warn("h264Profile should either be 'high' or 'low'");
+              h264Profile = "high";
+            }
+            if (!Number.isInteger(forceFPS) || Number.isInteger(forceFPS) && (forceFPS > 65 || forceFPS < 5)) {
+              logger.warn("forceFPS should be a number between 5 to 65, default value is 25 fps.");
+              forceFPS = 25;
+            }
+            if (typeof enableWebcamLayers !== "boolean") {
+              logger.warn("enableWebcamLayers should either be true or false");
+              enableWebcamLayers = Boolean(enableWebcamLayers);
+            }
+            if (!Number.isInteger(numSimulcastStreams) || Number.isInteger(numSimulcastStreams) && (numSimulcastStreams > 3 || numSimulcastStreams < 1)) {
+              logger.warn("numSimulcastStreams should be a number between 1 to 3, default value is 3.");
+              numSimulcastStreams = 3;
+            }
+            if (Array.isArray(videoBitRates) && videoBitRates.length >= 1 && videoBitRates.length <= 3 && videoBitRates.every(function (i) {
+              return Number.isInteger(i) && i >= 75 && i <= 800;
+            })) {
+              logger.debug("videoBitRates values are correct");
+            } else {
+              logger.warn("videobitrates values should be an integer array with maximum 3 elements and minimum 1 element. The values in the array are '[700,250,75]'");
+              videoBitRates = [700, 250, 75];
+            }
+            if (typeof forcePCMU !== "boolean") {
+              logger.warn("forcePCMU should either be true or false");
+              forcePCMU = Boolean(forcePCMU);
+            }
+            if (typeof forcePCMA !== "boolean") {
+              logger.warn("forcePCMA should either be true or false");
+              forcePCMA = Boolean(forcePCMA);
+            }
+            if (typeof autoGainControl !== "boolean") {
+              logger.warn("autoGainControl should either be true or false");
+              autoGainControl = Boolean(autoGainControl);
+            }
+            if (typeof echoCancellation !== "boolean") {
+              logger.warn("echoCancellation should either be true or false");
+              echoCancellation = Boolean(echoCancellation);
+            }
+            if (typeof noiseSuppression !== "boolean") {
+              logger.warn("noiseSuppression should either be true or false");
+              noiseSuppression = Boolean(noiseSuppression);
+            }
+            if (!Number.isInteger(sampleRate) || Number.isInteger(sampleRate) && (sampleRate > 64000 || sampleRate < 8000)) {
+              logger.warn("sampleRate should be a number between 8000 to 64000, default value is 44000 Khz.");
+              sampleRate = 44000;
+            }
+            if (!Number.isInteger(channelCount) || Number.isInteger(channelCount) && (channelCount > 2 || channelCount < 1)) {
+              logger.warn("sampleRate should be a number between 1 to 2, default value is 1, which is a mono audio.");
+              channelCount = 1;
+            }
+            if (typeof share !== "boolean") {
+              logger.warn("share should either be true or false");
+              share = Boolean(share);
+            }
+            if (typeof shareAudio !== "boolean") {
+              logger.warn("shareAudio should either be true or false");
+              shareAudio = Boolean(shareAudio);
+            }
+            if (typeof enableSharingLayers !== "boolean") {
+              logger.warn("enableSharingLayers should either be true or false");
+              enableSharingLayers = Boolean(enableSharingLayers);
+            }
+            if (Array.isArray(shareBitRates) && shareBitRates.length >= 1 && shareBitRates.length <= 3 && shareBitRates.every(function (i) {
+              return Number.isInteger(i) && i >= 500 && i <= 2500;
+            })) {
+              logger.debug("shareBitRates values are correct");
+            } else {
+              logger.warn("sharebitrates values should be an integer array with maximum 3 elements and minimum 1 element. The values in the array are '[2500,1250,500]'");
+              shareBitRates = [2500, 1250, 500];
+            }
+            if (["moderator", "participant", "attendee"].includes(peerType)) {
+              logger.debug("peerType is valid:%s", peerType);
+            } else {
+              peerType = "participant";
+              logger.debug("peerType is invalid:%s. By default set to: participant", peerType);
+            }
+            _this._videoResolution = videoResolution;
+            _this._forceVP8 = Boolean(forceVp8);
+            _this._forceH264 = Boolean(forceH264);
+            _this._forceVP9 = Boolean(forceVp9);
+            _this._enableWebcamLayers = Boolean(enableWebcamLayers);
+            _this._numSimulcastStreams = numSimulcastStreams;
+            _this._enableSharingLayers = Boolean(enableSharingLayers);
+            _context.prev = 34;
+            if (!peerName) peerName = (0, _randomName["default"])();
+            _this.data.inputParams = _objectSpread(_objectSpread({}, _this.data.inputParams), {}, {
+              peerName: peerName,
+              produce: produce,
+              produceAudio: produceAudio,
+              produceVideo: produceVideo,
+              consume: consume,
+              videoResolution: videoResolution,
+              forceVp8: forceVp8,
+              forceVp9: forceVp9,
+              forceH264: forceH264,
+              h264Profile: h264Profile,
+              forceFPS: forceFPS,
+              forcePCMU: forcePCMU,
+              forcePCMA: forcePCMA,
+              enableWebcamLayers: enableWebcamLayers,
+              numSimulcastStreams: numSimulcastStreams,
+              autoGainControl: autoGainControl,
+              echoCancellation: echoCancellation,
+              noiseSuppression: noiseSuppression,
+              sampleRate: sampleRate,
+              channelCount: channelCount,
+              videoBitRates: videoBitRates,
+              share: share,
+              shareAudio: shareAudio,
+              enableSharingLayers: enableSharingLayers,
+              shareBitRates: shareBitRates,
+              audioDeviceId: audioDeviceId,
+              videoDeviceId: videoDeviceId,
+              peerType: peerType,
+              roomType: roomType,
+              authenticationRequired: authenticationRequired,
+              password: password,
+              roomDisplayName: roomDisplayName
+            });
+            logger.info("input params are:%O", _this.data.inputParams);
+            message = {
+              id: "joinRoom",
+              type: "r",
+              peerId: _this.data.inputParams.peerId,
+              participantType: peerType === "attendee" ? "viewer" : peerType,
+              roomType: roomType,
+              roomDisplayName: roomDisplayName || "room-".concat(100000 + Math.round(Math.random() * 900000)),
+              browser: _this._client,
+              name: _this.data.inputParams.peerName,
+              room: _this.data.inputParams.roomId,
+              authenticationRequired: authenticationRequired,
+              isRoomPassword: password ? true : false,
+              roomPassword: password || null,
+              usageType: "sdk"
+            };
+            _this._sendMessage(message);
+            _context.next = 46;
+            break;
+          case 42:
+            _context.prev = 42;
+            _context.t0 = _context["catch"](34);
+            logger.error("Failed to join room:", _context.t0.message);
+            return _context.abrupt("return", {
+              success: false,
+              reason: _context.t0.message
+            });
+          case 46:
+          case "end":
+            return _context.stop();
+        }
+      }, _callee, null, [[34, 42]]);
+    })));
     (0, _defineProperty2["default"])(_this, "authenticateUser", function (message) {
       logger.info("Moderator authentication requested:%O", message);
       _this.emit("moderatorAuthentication", {
@@ -496,7 +559,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee4, null, [[3, 26]]);
       }));
-      return function (_x2) {
+      return function (_x) {
         return _ref6.apply(this, arguments);
       };
     }());
@@ -544,7 +607,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
             }
           }, _callee5);
         }));
-        return function (_x3) {
+        return function (_x2) {
           return _ref7.apply(this, arguments);
         };
       }());
@@ -689,7 +752,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                   }
                 }, _callee7);
               }));
-              return function (_x4) {
+              return function (_x3) {
                 return _ref12.apply(this, arguments);
               };
             }());
@@ -858,7 +921,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee9);
       }));
-      return function (_x5) {
+      return function (_x4) {
         return _ref14.apply(this, arguments);
       };
     }());
@@ -896,7 +959,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee10, null, [[2, 9]]);
       }));
-      return function (_x6) {
+      return function (_x5) {
         return _ref15.apply(this, arguments);
       };
     }());
@@ -930,7 +993,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee11, null, [[1, 9]]);
       }));
-      return function (_x7) {
+      return function (_x6) {
         return _ref16.apply(this, arguments);
       };
     }());
@@ -964,7 +1027,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee12, null, [[1, 9]]);
       }));
-      return function (_x8) {
+      return function (_x7) {
         return _ref17.apply(this, arguments);
       };
     }());
@@ -998,7 +1061,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee13, null, [[1, 9]]);
       }));
-      return function (_x9) {
+      return function (_x8) {
         return _ref18.apply(this, arguments);
       };
     }());
@@ -1135,7 +1198,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee14);
       }));
-      return function (_x10, _x11) {
+      return function (_x9, _x10) {
         return _ref19.apply(this, arguments);
       };
     }());
@@ -1390,6 +1453,36 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
         logger.debug("After deleting the current requestId:%o", localProcessings);
         _this._processingStartedByMe = localProcessings;
       }
+    });
+    (0, _defineProperty2["default"])(_this, "handleProcessingError", function (details) {
+      var totalProcessingTime = details.totalProcessingTime,
+        hlsfileKey = details.hlsfileKey,
+        size = details.size,
+        originalFile = details.originalFile,
+        lastFile = details.lastFile,
+        requestId = details.requestId,
+        error = details.error;
+      logger.debug("handleProcessingCompletion()| received message is:%o", details);
+      logger.debug("Before update, Total files to be processed are:%o", _this._processingStartedByMe);
+      if (_this._processingStartedByMe[originalFile]) {
+        _this._processingStartedByMe = _objectSpread(_objectSpread({}, _this._processingStartedByMe), {}, (0, _defineProperty2["default"])({}, requestId, _objectSpread(_objectSpread({}, _this._processingStartedByMe[requestId]), {}, (0, _defineProperty2["default"])({}, originalFile, _objectSpread(_objectSpread({}, _this._processingStartedByMe[originalFile]), {}, {
+          status: "error",
+          hlsfileKey: hlsfileKey,
+          size: size,
+          totalProcessingTime: totalProcessingTime,
+          error: error
+        })))));
+      }
+      logger.debug("After update, Total files to be processed are:%o", _this._processingStartedByMe);
+      _this.emit("processingError", details);
+      // if(lastFile){
+      //   logger.debug("The last file processing has been completed! Remove all the files that has been completed with the same requesterId");
+      //   let localProcessings = {...this._processingStartedByMe};
+      //   delete localProcessings[requestId];
+      //   logger.debug("After deleting the current requestId:%o",localProcessings);
+      //   this._processingStartedByMe = localProcessings;
+
+      // }
     });
     _this._closed = false;
     // this._joined = false;
@@ -1716,7 +1809,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                     }
                   }, _callee18);
                 }));
-                return function (_x12) {
+                return function (_x11) {
                   return _ref28.apply(this, arguments);
                 };
               }());
@@ -1798,6 +1891,9 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
               break;
             case "processingCompleted":
               _this3.handleProcessingCompletion(parsedMessage);
+              break;
+            case "processingError":
+              _this3.handleProcessingError(parsedMessage);
               break;
             //   case "roomCreationUnsuccessful":
             //     this.showCommonAlert(parsedMessage);
@@ -2015,7 +2111,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee20, this);
       }));
-      function onExistingParticipants(_x13) {
+      function onExistingParticipants(_x12) {
         return _onExistingParticipants.apply(this, arguments);
       }
       return onExistingParticipants;
@@ -2147,7 +2243,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
                     }
                   }, _callee23);
                 }));
-                return function (_x14) {
+                return function (_x13) {
                   return _ref29.apply(this, arguments);
                 };
               }();
@@ -3100,7 +3196,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee33, this);
       }));
-      function changeVideoInput(_x15) {
+      function changeVideoInput(_x14) {
         return _changeVideoInput2.apply(this, arguments);
       }
       return changeVideoInput;
@@ -3193,7 +3289,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee34, this, [[9, 30]]);
       }));
-      function _changeVideoInput(_x16) {
+      function _changeVideoInput(_x15) {
         return _changeVideoInput3.apply(this, arguments);
       }
       return _changeVideoInput;
@@ -3234,7 +3330,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee35, this);
       }));
-      function changeAudioInput(_x17) {
+      function changeAudioInput(_x16) {
         return _changeAudioInput2.apply(this, arguments);
       }
       return changeAudioInput;
@@ -3335,7 +3431,7 @@ var JsSdk = exports.JsSdk = /*#__PURE__*/function (_EventEmitter) {
           }
         }, _callee36, this, [[12, 27]]);
       }));
-      function _changeAudioInput(_x18) {
+      function _changeAudioInput(_x17) {
         return _changeAudioInput3.apply(this, arguments);
       }
       return _changeAudioInput;

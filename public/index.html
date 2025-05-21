@@ -83,7 +83,7 @@
     <form type="submit" class="join-room">
         <input id="roomId" placeholder="Enter room Id" required></input>
         <input id="peerName" placeholder="Enter peerName"></input>
-        <button id="joinButton">Join Room</button>
+        <button id="initButton">Init Room</button>
     </form>
     
     <div class="device-list">
@@ -100,10 +100,12 @@
         </select>
         </div>
     </div>
+    <button id="joinButton" disabled> Join Room</button>
     <button id="recordingStartButton" disabled> Start Recording</button>
     <button id="recordingStopButton" disabled>Stop Recording</button>
      <button id="processVideosButton" disabled>Process Videos</button>
     <button id="leaveButton" disabled>Leave Room</button>
+    <button id="closeButton" disabled>Close Room</button>
 <div id="additional"></div>
 <div id="notification"></div>
     <div class="peer-list" id="peerList">

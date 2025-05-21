@@ -63,8 +63,8 @@ const inputParams = {
       : 1,
   msRegion: "us", // Default region
   backgroundImage: "", // Placeholder for image link
-  authenticationRequired: urlParams.get("auth") !== "false",
-  peerType: urlParams.get("peerType") || "moderator",
+  authenticationRequired: urlParams.get("auth") === "true",
+  peerType: urlParams.get("peerType") || "participant",
   password: urlParams.get("password"),
 };
 
@@ -137,12 +137,12 @@ const populateDeviceSelects = (audioDevices, videoDevices) => {
 getAllDevices();
 
 document
-  .getElementById("joinButton")
+  .getElementById("initButton")
   .addEventListener("click", async (event) => {
     event.preventDefault();
 
     const roomId = document.getElementById("roomId").value;
-    const peerName = document.getElementById("peerName").value;
+    
 
     if (!roomId) {
       alert("Please provide RoomId to join.");
@@ -175,24 +175,14 @@ document
         roomId,
         peerName,
       };
-      const params = {
-        peerName,
-        produce: true,
-        consume: true,
-        // share: true,  true if one wants to join call with screen share on by default
-        // produceAudio: false,  both should be set false to join the call without audio or video
-        // produceVideo: false,
-        audioDeviceId: selectedAudioDeviceId,
-        videoDeviceId: selectedVideoDeviceId,
-        ...inputParams,
-      };
+      
 
       try {
         vidScaleClient = await samvyo.JsSdk.init(initialParams);
         console.log("Successfully inistialised the room:", vidScaleClient);
 
         vidScaleClient.on("initSuccess", async () => {
-          await vidScaleClient.joinRoom(params);
+         
         });
 
         // Set up event listeners
@@ -323,11 +313,22 @@ document
           alert(`Processing has been completed on the room at`);
           document.getElementById("processVideosButton").disabled = false;
         });
-        document.getElementById("leaveButton").disabled = false;
-        document.getElementById("recordingStartButton").disabled = false;
-        document.getElementById("recordingStopButton").disabled = false;
+
+        vidScaleClient.on("roomClosed", ({roomId}) => {
+          removeAllPeers(); //removes the peerList div upon leaving the room
+          showThankYouMessage();
+           document.getElementById("leaveButton").disabled = true;
+          document.getElementById("recordingStartButton").disabled = true;
+          document.getElementById("recordingStopButton").disabled = true;
+          // document.getElementById("processVideosButton").disabled = true;
+          document.getElementById("joinButton").disabled = false;
+          alert("room closed by moderator!");
+        });
+        // document.getElementById("leaveButton").disabled = false;
+        // document.getElementById("recordingStartButton").disabled = false;
+        // document.getElementById("recordingStopButton").disabled = false;
         document.getElementById("processVideosButton").disabled = false;
-        document.getElementById("joinButton").disabled = true;
+        document.getElementById("joinButton").disabled = false;
       } catch (error) {
         console.error("Error joining room:", error);
       }
@@ -335,7 +336,34 @@ document
       alert("Failed to fetch session token.");
     }
   });
+document.getElementById("joinButton").addEventListener("click", async () => {
+  if (vidScaleClient) {
+    const peerName = document.getElementById("peerName").value;
+    const params = {
+        peerName,
+        produce: true,
+        consume: true,
+        // share: true,  true if one wants to join call with screen share on by default
+        // produceAudio: false,  both should be set false to join the call without audio or video
+        // produceVideo: false,
+        audioDeviceId: selectedAudioDeviceId,
+        videoDeviceId: selectedVideoDeviceId,
+        ...inputParams,
+      };
+    console.log("input params before calling joinroom",params);
 
+    await vidScaleClient.joinRoom(params);
+    console.log("Join the room");
+    document.getElementById("leaveButton").disabled = false;
+    document.getElementById("closeButton").disabled = false;
+    document.getElementById("recordingStartButton").disabled = false;
+    document.getElementById("recordingStopButton").disabled = false;
+    // document.getElementById("processVideosButton").disabled = true;
+    document.getElementById("joinButton").disabled = true;
+    removeAllPeers(); //removes the peerList div upon leaving the room
+    showThankYouMessage();
+  }
+});
 document.getElementById("leaveButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.leaveRoom();
@@ -343,7 +371,20 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("recordingStartButton").disabled = true;
     document.getElementById("recordingStopButton").disabled = true;
-    document.getElementById("processVideosButton").disabled = true;
+    // document.getElementById("processVideosButton").disabled = true;
+    document.getElementById("joinButton").disabled = false;
+    removeAllPeers(); //removes the peerList div upon leaving the room
+    showThankYouMessage();
+  }
+});
+document.getElementById("closeButton").addEventListener("click", async () => {
+  if (vidScaleClient) {
+    await vidScaleClient.closeRoom();
+    console.log("Closed the room");
+    document.getElementById("leaveButton").disabled = true;
+    document.getElementById("recordingStartButton").disabled = true;
+    document.getElementById("recordingStopButton").disabled = true;
+    // document.getElementById("processVideosButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
@@ -355,8 +396,7 @@ document
   .addEventListener("click", async () => {
     if (vidScaleClient) {
       await vidScaleClient.startRecording({
-        recordingType: "av",
-        outputType: "mp4",
+        recordingType: "av"
       });
       console.log("Recording started");
       // document.getElementById("leaveButton").disabled = true;
@@ -385,7 +425,7 @@ document
 
 document.getElementById("processVideosButton").addEventListener("click", async () => {
   if (vidScaleClient) {
-    await vidScaleClient.startProcessing({inputFiles:[{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/room12345-13-5-2025-16-43-47/room12345-record-13-5-2025-16-44-30.mp4",type:"mp4"}],cloud:"do",region:"sgp1",bucket:"cvr-org-823047296136-1"});
+    await vidScaleClient.startProcessing({inputFiles:[{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/file_example_MP4_1920_18MG.mp4",type:"mp4"},{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/sample-30s.mp4",type:"mp4"}]});
     console.log("Processing Videos Started");
     // document.getElementById("leaveButton").disabled = true;
     document.getElementById("processVideosButton").disabled = true;
