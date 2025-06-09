@@ -296,38 +296,14 @@ document
           alert(`${eventType}: ${eventText}`);
         });
 
-        vidScaleClient.on("recordingStarted", ({ peerId, startTime }) => {
-          console.log(
-            `Recording has been started in this room at ${startTime}`
-          );
-          alert(`Recording has been started on the room at: ${startTime}`);
-          // The start time is provided as a unix timestamp value, please use a library like moment to convert it to a readable format like "HH:MM DD-MM-YYYY"
-        });
-
-        vidScaleClient.on("recordingEnded", () => {
-          console.log(`Recording has been ended on this room at`);
-          alert(`Recording has been ended on the room at`);
-        });
-         vidScaleClient.on("processingCompleted", (details) => {
-          console.log(`Processing has been completed`,details);
-          alert(`Processing has been completed on the room at`);
-          document.getElementById("processVideosButton").disabled = false;
-        });
-
         vidScaleClient.on("roomClosed", ({roomId}) => {
           removeAllPeers(); //removes the peerList div upon leaving the room
           showThankYouMessage();
-           document.getElementById("leaveButton").disabled = true;
-          document.getElementById("recordingStartButton").disabled = true;
-          document.getElementById("recordingStopButton").disabled = true;
-          // document.getElementById("processVideosButton").disabled = true;
+          document.getElementById("leaveButton").disabled = true;
           document.getElementById("joinButton").disabled = false;
           alert("room closed by moderator!");
         });
-        // document.getElementById("leaveButton").disabled = false;
-        // document.getElementById("recordingStartButton").disabled = false;
-        // document.getElementById("recordingStopButton").disabled = false;
-        document.getElementById("processVideosButton").disabled = false;
+        // document.getElementById("processVideosButton").disabled = false;
         document.getElementById("joinButton").disabled = false;
       } catch (error) {
         console.error("Error joining room:", error);
@@ -356,9 +332,8 @@ document.getElementById("joinButton").addEventListener("click", async () => {
     console.log("Join the room");
     document.getElementById("leaveButton").disabled = false;
     document.getElementById("closeButton").disabled = false;
-    document.getElementById("recordingStartButton").disabled = false;
-    document.getElementById("recordingStopButton").disabled = false;
-    // document.getElementById("processVideosButton").disabled = true;
+    // document.getElementById("recordingStartButton").disabled = false;
+    // document.getElementById("recordingStopButton").disabled = false;
     document.getElementById("joinButton").disabled = true;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
@@ -369,9 +344,8 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     await vidScaleClient.leaveRoom();
     console.log("Left the room");
     document.getElementById("leaveButton").disabled = true;
-    document.getElementById("recordingStartButton").disabled = true;
-    document.getElementById("recordingStopButton").disabled = true;
-    // document.getElementById("processVideosButton").disabled = true;
+    // document.getElementById("recordingStartButton").disabled = true;
+    // document.getElementById("recordingStopButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
@@ -382,58 +356,45 @@ document.getElementById("closeButton").addEventListener("click", async () => {
     await vidScaleClient.closeRoom();
     console.log("Closed the room");
     document.getElementById("leaveButton").disabled = true;
-    document.getElementById("recordingStartButton").disabled = true;
-    document.getElementById("recordingStopButton").disabled = true;
-    // document.getElementById("processVideosButton").disabled = true;
+    // document.getElementById("recordingStartButton").disabled = true;
+    // document.getElementById("recordingStopButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
   }
 });
 
-document
-  .getElementById("recordingStartButton")
-  .addEventListener("click", async () => {
-    if (vidScaleClient) {
-      await vidScaleClient.startRecording({
-        recordingType: "av"
-      });
-      console.log("Recording started");
-      // document.getElementById("leaveButton").disabled = true;
-      document.getElementById("recordingStartButton").disabled = true;
-      document.getElementById("recordingStopButton").disabled = false;
-      // document.getElementById("joinButton").disabled = false;
-      // removeAllPeers(); //removes the peerList div upon leaving the room
-      // showThankYouMessage();
-    }
-  });
+// document
+//   .getElementById("recordingStartButton")
+//   .addEventListener("click", async () => {
+//     if (vidScaleClient) {
+//       await vidScaleClient.startRecording({
+//         recordingType: "av"
+//       });
+//       console.log("Recording started");
+//       document.getElementById("recordingStartButton").disabled = true;
+//       document.getElementById("recordingStopButton").disabled = false;
+//     }
+//   });
 
-document
-  .getElementById("recordingStopButton")
-  .addEventListener("click", async () => {
-    if (vidScaleClient) {
-      await vidScaleClient.stopRecording();
-      console.log("Recording Ended");
-      // document.getElementById("leaveButton").disabled = true;
-      document.getElementById("recordingStartButton").disabled = false;
-      document.getElementById("recordingStopButton").disabled = true;
-      // document.getElementById("joinButton").disabled = false;
-      // removeAllPeers(); //removes the peerList div upon leaving the room
-      // showThankYouMessage();
-    }
-  });
+// document
+//   .getElementById("recordingStopButton")
+//   .addEventListener("click", async () => {
+//     if (vidScaleClient) {
+//       await vidScaleClient.stopRecording();
+//       console.log("Recording Ended");
+//       document.getElementById("recordingStartButton").disabled = false;
+//       document.getElementById("recordingStopButton").disabled = true;
+//     }
+//   });
 
-document.getElementById("processVideosButton").addEventListener("click", async () => {
-  if (vidScaleClient) {
-    await vidScaleClient.startProcessing({inputFiles:[{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/file_example_MP4_1920_18MG.mp4",type:"mp4"},{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/sample-30s.mp4",type:"mp4"}]});
-    console.log("Processing Videos Started");
-    // document.getElementById("leaveButton").disabled = true;
-    document.getElementById("processVideosButton").disabled = true;
-    // document.getElementById("joinButton").disabled = false;
-    // removeAllPeers(); //removes the peerList div upon leaving the room
-    // showThankYouMessage();
-  }
-});
+// document.getElementById("processVideosButton").addEventListener("click", async () => {
+//   if (vidScaleClient) {
+//     await vidScaleClient.startProcessing({inputFiles:[{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/file_example_MP4_1920_18MG.mp4",type:"mp4"},{url:"https://cvr-org-823047296136-1.sgp1.digitaloceanspaces.com/videos/sample-30s.mp4",type:"mp4"}]});
+//     console.log("Processing Videos Started");
+//     document.getElementById("processVideosButton").disabled = true;
+//   }
+// });
 
 function showModAuth({requesterName,requesterPeerId,text}){
   const div = document.getElementById("additional");
