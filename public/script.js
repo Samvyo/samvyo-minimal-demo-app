@@ -6,6 +6,83 @@ let selectedAudioDeviceId = null;
 let selectedVideoDeviceId = null;
 const screenShares = new Map(); // Map to store screen share details
 
+const captionsByPeer = new Map();
+let captionsChat = [];
+const MAX_CAPTIONS = 200;
+
+// Transcription mixer state (simple version)
+let txAudioContext = null;
+let txDestination = null;
+let txRecorder = null;
+const txSourceNodes = new Map();
+const txGainNodes = new Map();
+
+function ensureTxGraph() {
+  try {
+    if (!txAudioContext) txAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (!txDestination) txDestination = txAudioContext.createMediaStreamDestination();
+  } catch (e) { console.warn("Failed to init transcription graph", e); }
+}
+
+function startTxRecorder() {
+  try {
+    if (txRecorder) return;
+    ensureTxGraph();
+    if (!txDestination) return;
+    const stream = txDestination.stream;
+    if (!stream) return;
+    const options = { mimeType: 'audio/webm;codecs=opus' };
+    const rec = new MediaRecorder(stream, options);
+    rec.ondataavailable = (event) => {
+      try {
+        if (!event.data || !event.data.size || !vidScaleClient || !vidScaleClient.sendAudioForTranscription) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64Audio = reader.result.split(',')[1];
+          const activeId = vidScaleClient?.data?.inputParams?.peerId || 'unknown';
+          try { vidScaleClient.sendAudioForTranscription(base64Audio, activeId); } catch(err) { console.warn('sendAudioForTranscription failed', err); }
+        };
+        reader.readAsDataURL(event.data);
+      } catch(err) { console.warn('tx recorder ondataavailable error', err); }
+    };
+    rec.onerror = (err) => console.warn('tx recorder error', err);
+    rec.start(1000);
+    txRecorder = rec;
+  } catch (err) { console.warn('Failed to start tx recorder', err); }
+}
+
+function stopTxRecorder() {
+  try { if (txRecorder && txRecorder.state !== 'inactive') txRecorder.stop(); } catch {}
+  txRecorder = null;
+}
+
+function addTrackToTxMixer(peerId, audioTrack) {
+  try {
+    ensureTxGraph();
+    if (!txAudioContext || !txDestination || !audioTrack) return;
+    if (txSourceNodes.has(peerId)) return;
+    const mediaStream = new MediaStream([audioTrack]);
+    const source = new MediaStreamAudioSourceNode(txAudioContext, { mediaStream });
+    const gain = txAudioContext.createGain();
+    gain.gain.value = 0.2;
+    source.connect(gain).connect(txDestination);
+    txSourceNodes.set(peerId, source);
+    txGainNodes.set(peerId, gain);
+    startTxRecorder();
+  } catch (e) { console.warn('addTrackToTxMixer failed', e); }
+}
+
+function removeTrackFromTxMixer(peerId) {
+  try {
+    const source = txSourceNodes.get(peerId);
+    const gain = txGainNodes.get(peerId);
+    try { gain && gain.disconnect(); } catch {}
+    try { source && source.disconnect(); } catch {}
+    txSourceNodes.delete(peerId);
+    txGainNodes.delete(peerId);
+  } catch {}
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 
 const inputParams = {
@@ -206,16 +283,27 @@ document
           getAllDevices();
         });
 
+        vidScaleClient.on("joinSuccess", () => {
+          try {
+            const container = document.getElementById("captionsContainer");
+            if (container) container.style.display = "block";
+          } catch {}
+          try { vidScaleClient.setCaptionPreference && vidScaleClient.setCaptionPreference(true); } catch {}
+          try { vidScaleClient.startTranscription && vidScaleClient.startTranscription(); } catch (e) { console.warn("startTranscription not available", e); }
+        });
+
         vidScaleClient.on("micStart", ({ peerId, audioTrack, type }) => {
           console.log(`Mic started for peer: ${peerId}`);
           updatePeerAudio(peerId, audioTrack, type);
           if (type === "remote")
             document.getElementById("additional").style.display = "none";
+          try { if (audioTrack) addTrackToTxMixer(peerId, audioTrack); } catch {}
         });
 
         vidScaleClient.on("micEnd", ({ peerId }) => {
           console.log(`Mic ended for peer: ${peerId}`);
           removePeerAudio(peerId);
+          try { removeTrackFromTxMixer(peerId); } catch {}
         });
 
         vidScaleClient.on("peerMuted", ({ peerId, type }) => {
@@ -302,6 +390,31 @@ document
           document.getElementById("leaveButton").disabled = true;
           document.getElementById("joinButton").disabled = false;
           alert("room closed by moderator!");
+          clearCaptions();
+          try { stopTxRecorder(); } catch {}
+          try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+        });
+        
+   
+        vidScaleClient.on("customMessage", async (message) => {
+          try {
+            console.log("customMessage", message);
+            // Expecting message.type === 'transcription' and message.messageType === 'deepgram:transcript'
+            if (message?.type === "transcription" && message?.messageType === "deepgram:transcript") {
+              let payload = message?.data;
+              if (typeof payload === "string") {
+                try { payload = JSON.parse(payload); } catch { /* ignore */ }
+              }
+              const text = payload?.transcript || payload?.text;
+              const isFinal = !!(payload?.is_final || payload?.isFinal);
+              const speakerId = payload?.speaker || message.from;
+              if (text && speakerId) {
+                upsertCaption(speakerId, text, isFinal);
+              }
+            }
+          } catch (err) {
+            console.warn("customMessage captions handler error", err);
+          }
         });
         // document.getElementById("processVideosButton").disabled = false;
         document.getElementById("joinButton").disabled = false;
@@ -336,7 +449,7 @@ document.getElementById("joinButton").addEventListener("click", async () => {
     // document.getElementById("recordingStopButton").disabled = false;
     document.getElementById("joinButton").disabled = true;
     removeAllPeers(); //removes the peerList div upon leaving the room
-    showThankYouMessage();
+    // showThankYouMessage();
   }
 });
 document.getElementById("leaveButton").addEventListener("click", async () => {
@@ -349,6 +462,9 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
+    clearCaptions();
+    try { stopTxRecorder(); } catch {}
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
   }
 });
 document.getElementById("closeButton").addEventListener("click", async () => {
@@ -361,6 +477,9 @@ document.getElementById("closeButton").addEventListener("click", async () => {
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
+    clearCaptions();
+    try { stopTxRecorder(); } catch {}
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
   }
 });
 
@@ -664,4 +783,64 @@ function showThankYouMessage() {
   setTimeout(() => {
     thankYouMessage.remove();
   }, 5000);
+}
+
+// ===== Closed Captions (Transcription) UI helpers =====
+function getParticipantName(peerId) {
+  const p = peers.get(peerId);
+  return p?.peerName || (peerId === vidScaleClient?.data?.inputParams?.peerId ? "You" : peerId);
+}
+
+function renderCaptions() {
+  try {
+    const feed = document.getElementById("captionsFeed");
+    if (!feed) return;
+    feed.innerHTML = "";
+    captionsChat.forEach((m) => {
+      const row = document.createElement("div");
+      row.style.whiteSpace = "pre-wrap";
+      row.style.opacity = m.pending ? 0.85 : 1;
+      row.textContent = `${getParticipantName(m.peerId)}: ${m.text}`;
+      feed.appendChild(row);
+    });
+    // Auto scroll to bottom
+    feed.scrollTop = feed.scrollHeight;
+  } catch {}
+}
+
+function upsertCaption(peerId, text, isFinal) {
+  const ts = Date.now();
+  captionsByPeer.set(peerId, { text, ts, isFinal: !!isFinal });
+
+  // Update chat feed with pending/final rows
+  const lastIdx = [...captionsChat].reverse().findIndex(m => m.peerId === peerId && m.pending === true);
+  const idx = lastIdx >= 0 ? captionsChat.length - 1 - lastIdx : -1;
+  if (!isFinal) {
+    if (idx >= 0) {
+      captionsChat[idx] = { ...captionsChat[idx], text, ts };
+    } else {
+      captionsChat.push({ id: `${peerId}-${ts}`, peerId, text, ts, pending: true });
+    }
+  } else {
+    if (idx >= 0) {
+      captionsChat[idx] = { ...captionsChat[idx], text, ts, pending: false };
+    } else {
+      captionsChat.push({ id: `${peerId}-${ts}`, peerId, text, ts, pending: false });
+    }
+  }
+  if (captionsChat.length > MAX_CAPTIONS) {
+    captionsChat = captionsChat.slice(captionsChat.length - MAX_CAPTIONS);
+  }
+  renderCaptions();
+}
+
+function clearCaptions() {
+  try {
+    captionsByPeer.clear();
+    captionsChat = [];
+    const feed = document.getElementById("captionsFeed");
+    if (feed) feed.innerHTML = "";
+    const container = document.getElementById("captionsContainer");
+    if (container) container.style.display = "none";
+  } catch {}
 }
