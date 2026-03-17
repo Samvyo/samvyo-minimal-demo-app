@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samvyo Demo</title>
     <!-- <script src="samvyo-js.js"> -->
-    </script> 
+    </script>
     <!-- Ensure this path is correct -->
-   <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
+    <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
     <script src="script.js" defer></script>
     <style>
         video {
@@ -15,8 +16,9 @@
             height: 200px;
             border: 1px solid black;
         }
-        
-        .peer-card, .ss-card {
+
+        .peer-card,
+        .ss-card {
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 10px;
@@ -24,56 +26,58 @@
             width: 350px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: center;  
         }
-        
-        .peer-card video, .ss-card video {
+
+        .peer-card video,
+        .ss-card video {
             width: 100%;
             height: auto;
             border: 1px solid black;
         }
-        
-        .peer-list, .screen-share-list {
+
+        .peer-list,
+        .screen-share-list {
             margin-top: 20px;
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
         }
-        
-        .peer-media{
+
+        .peer-media {
             display: flex;
             padding-right: 20px;
         }
 
-        .device-list{
+        .device-list {
             margin-top: 20px;
             display: flex;
             width: 30vw;
             justify-content: space-between;
             margin-bottom: 20px;
-            
+
         }
 
-        .join-room{
+        .join-room {
             width: 30vw;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        #audioInput{
+        #audioInput {
             margin-right: 10px;
             width: 14.5vw;
-    
+
         }
 
-        #videoInput{
+        #videoInput {
             display: flex;
             width: 14.5vw;
         }
-        
     </style>
 </head>
+
 <body>
     <h1>Samvyo Demo</h1>
     <!-- <div>
@@ -85,34 +89,38 @@
         <input id="peerName" placeholder="Enter peerName"></input>
         <button id="initButton">Init Room</button>
     </form>
-    
+
     <div class="device-list">
         <div>
-        <label for="audioInput">Choose audio input:</label>
-        <select id="audioInput">
-            <option value="">Select Audio Device</option>
-        </select>
+            <label for="audioInput">Choose audio input:</label>
+            <select id="audioInput">
+                <option value="">Select Audio Device</option>
+            </select>
         </div>
         <div>
-        <label for="videoInput">Choose video input:</label>
-        <select id="videoInput">
-            <option value="">Select Video Device</option>
-        </select>
+            <label for="videoInput">Choose video input:</label>
+            <select id="videoInput">
+                <option value="">Select Video Device</option>
+            </select>
         </div>
     </div>
     <button id="joinButton" disabled> Join Room</button>
     <button id="leaveButton" disabled>Leave Room</button>
     <button id="closeButton" disabled>Close Roo</button>
-<div id="additional"></div>
-<div id="notification"></div>
+    <div id="additional"></div>
+    <div id="notification"></div>
     <div class="peer-list" id="peerList">
-        <!-- Peers will be listed here -->
+        <!-- Peers will be listed here added new name  -->
+         <!-- // sai prasad -->
+          <div></div>
+
     </div>
-    <div class="screen-share-list" id="screenShareList" >
+    <div class="screen-share-list" id="screenShareList">
 
     </div>
     <div id="captionsContainer" style="position:fixed; left:0; right:0; bottom:12px; z-index:1000; display:none;">
-        <div id="captionsPanel" style="margin:0 auto; max-width:800px; background: rgba(0,0,0,0.55); color:#fff; border-radius:8px; padding:8px 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
+        <div id="captionsPanel"
+            style="margin:0 auto; max-width:800px; background: rgba(0,0,0,0.55); color:#fff; border-radius:8px; padding:8px 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:6px;">
                 <strong style="font-size:14px; opacity:0.9;">Live Captions</strong>
                 <span id="captionsHint" style="font-size:11px; opacity:0.8;">Transcription is on</span>
@@ -121,4 +129,5 @@
         </div>
     </div>
 </body>
+
 </html>
