@@ -220,10 +220,19 @@ const populateDeviceSelects = (audioDevices, videoDevices) => {
 
 getAllDevices();
 
+
+
 document
   .getElementById("initButton")
   .addEventListener("click", async (event) => {
     event.preventDefault();
+
+    const loader = document.getElementById("joiningLoader");
+    loader.classList.remove("hidden");
+    // Disable join button
+    const joinBtn = document.getElementById("initButton");
+    joinBtn.textContent = "Joining...";
+    joinBtn.disabled = true;
 
     const roomId = document.getElementById("roomId").value;
     const peerName = document.getElementById("peerName").value;
@@ -370,10 +379,35 @@ document
 
         vidScaleClient.on("videoStart", ({ peerId, videoTrack, type }) => {
           console.log(`Video started for peer: ${peerId}`);
+
           updatePeerVideo(peerId, videoTrack, type);
           const peer = peers.get(peerId);
           if (peer) {
             if (peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
+          }
+
+          // Only when local camera starts
+          if (type === "local") {
+
+            // Hide loader
+            document.getElementById("joiningLoader").classList.add("hidden");
+
+            // Switch UI
+            document.getElementById("lobby-page").classList.add("hidden");
+            document.getElementById("call-page").classList.remove("hidden");
+            document.getElementById("call-page").classList.add("flex");
+
+            resetControls();
+
+            document.getElementById("leaveButton").disabled = false;
+
+            const displayRoomId = document.getElementById("call-room-id-display");
+            if (displayRoomId) displayRoomId.textContent =
+              document.getElementById("roomId").value;
+
+            const joinBtn = document.getElementById("initButton");
+            joinBtn.textContent = "Join Room";
+            joinBtn.disabled = false;
           }
         });
 
@@ -493,7 +527,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch { }
+    try { stopTxRecorder(); } catch { } tu
     try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
@@ -929,7 +963,7 @@ if (settingsBtn && settingsPanel) {
     e.stopPropagation();
     settingsPanel.classList.toggle("hidden");
   });
-   if (settingsCloseBtn) {
+  if (settingsCloseBtn) {
     settingsCloseBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // prevents outside click conflict
       settingsPanel.classList.add("hidden");

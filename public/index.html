@@ -42,7 +42,8 @@
             overflow: hidden;
         }
 
-        /* Active screen share button */ .screen-share-active {
+        /* Active screen share button */
+        .screen-share-active {
             background-color: #8ab4f8 !important;
             color: #202124 !important;
         }
@@ -114,8 +115,6 @@
             background: #000;
             border-radius: 0.75rem;
         }
-
-         
     </style>
 
     <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
@@ -133,12 +132,12 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label  class="text-xl p-1 font-regular mb-6 text-center tracking-tight"  >Room ID</label>
+                        <label class="text-xl p-1 font-regular mb-6 text-center tracking-tight">Room ID</label>
                         <input id="roomId" placeholder="Enter Room ID" required autocomplete="off"
                             class="w-full bg-dark text-white border border-gray-600 rounded-md px-4 py-3 focus:outline-none focus:border-meetBlue focus:ring-1 focus:ring-meetBlue transition-colors">
                     </div>
                     <div>
-                        <label  class="text-xl p-1 font-regular mb-6 text-center tracking-tight"  >Peer Name</label>
+                        <label class="text-xl p-1 font-regular mb-6 text-center tracking-tight">Peer Name</label>
                         <input id="peerName" placeholder="Peer Name" autocomplete="off"
                             class="w-full bg-dark text-white border border-gray-600 rounded-md px-4 py-3 focus:outline-none focus:border-meetBlue focus:ring-1 focus:ring-meetBlue transition-colors">
                     </div>
@@ -305,7 +304,12 @@
 
         </div>
     </div>
-
+    <div id="joiningLoader" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+        <div class="bg-meetGray px-6 py-4 rounded-lg flex items-center gap-3 shadow-lg">
+            <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            <span class="text-white text-sm">Joining the room...</span>
+        </div>
+    </div>
 </body>
 
 </html>
