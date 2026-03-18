@@ -40,10 +40,10 @@ function startTxRecorder() {
         reader.onload = () => {
           const base64Audio = reader.result.split(',')[1];
           const activeId = vidScaleClient?.data?.inputParams?.peerId || 'unknown';
-          try { vidScaleClient.sendAudioForTranscription(base64Audio, activeId); } catch(err) { console.warn('sendAudioForTranscription failed', err); }
+          try { vidScaleClient.sendAudioForTranscription(base64Audio, activeId); } catch (err) { console.warn('sendAudioForTranscription failed', err); }
         };
         reader.readAsDataURL(event.data);
-      } catch(err) { console.warn('tx recorder ondataavailable error', err); }
+      } catch (err) { console.warn('tx recorder ondataavailable error', err); }
     };
     rec.onerror = (err) => console.warn('tx recorder error', err);
     rec.start(1000);
@@ -52,7 +52,7 @@ function startTxRecorder() {
 }
 
 function stopTxRecorder() {
-  try { if (txRecorder && txRecorder.state !== 'inactive') txRecorder.stop(); } catch {}
+  try { if (txRecorder && txRecorder.state !== 'inactive') txRecorder.stop(); } catch { }
   txRecorder = null;
 }
 
@@ -77,11 +77,11 @@ function removeTrackFromTxMixer(peerId) {
   try {
     const source = txSourceNodes.get(peerId);
     const gain = txGainNodes.get(peerId);
-    try { gain && gain.disconnect(); } catch {}
-    try { source && source.disconnect(); } catch {}
+    try { gain && gain.disconnect(); } catch { }
+    try { source && source.disconnect(); } catch { }
     txSourceNodes.delete(peerId);
     txGainNodes.delete(peerId);
-  } catch {}
+  } catch { }
 }
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -96,31 +96,31 @@ const inputParams = {
   h264Profile: urlParams.get("h264Profile") === "low" ? "low" : "high",
   forceFPS:
     !isNaN(Number(urlParams.get("forceFPS"))) &&
-    Number(urlParams.get("forceFPS")) > 0 &&
-    Number(urlParams.get("forceFPS")) <= 60
+      Number(urlParams.get("forceFPS")) > 0 &&
+      Number(urlParams.get("forceFPS")) <= 60
       ? Number(urlParams.get("forceFPS"))
       : 30,
   enableWebcamLayers: urlParams.get("enableWebcamLayers") !== "false",
   numSimulcastStreams:
     !isNaN(Number(urlParams.get("numSimulcastStreams"))) &&
-    Number(urlParams.get("numSimulcastStreams")) > 0 &&
-    Number(urlParams.get("numSimulcastStreams")) <= 3
+      Number(urlParams.get("numSimulcastStreams")) > 0 &&
+      Number(urlParams.get("numSimulcastStreams")) <= 3
       ? Number(urlParams.get("numSimulcastStreams"))
       : 3,
   videoBitRates: [
     !isNaN(Number(urlParams.get("videoBitRateHigh"))) &&
-    Number(urlParams.get("videoBitRateHigh")) > 50 &&
-    Number(urlParams.get("videoBitRateHigh")) <= 1000
+      Number(urlParams.get("videoBitRateHigh")) > 50 &&
+      Number(urlParams.get("videoBitRateHigh")) <= 1000
       ? Number(urlParams.get("videoBitRateHigh"))
       : 500,
     !isNaN(Number(urlParams.get("videoBitRateMedium"))) &&
-    Number(urlParams.get("videoBitRateMedium")) > 30 &&
-    Number(urlParams.get("videoBitRateMedium")) <= 300
+      Number(urlParams.get("videoBitRateMedium")) > 30 &&
+      Number(urlParams.get("videoBitRateMedium")) <= 300
       ? Number(urlParams.get("videoBitRateMedium"))
       : 250,
     !isNaN(Number(urlParams.get("videoBitRateLow"))) &&
-    Number(urlParams.get("videoBitRateLow")) > 10 &&
-    Number(urlParams.get("videoBitRateLow")) <= 125
+      Number(urlParams.get("videoBitRateLow")) > 10 &&
+      Number(urlParams.get("videoBitRateLow")) <= 125
       ? Number(urlParams.get("videoBitRateLow"))
       : 100,
   ],
@@ -129,14 +129,14 @@ const inputParams = {
   noiseSuppression: urlParams.get("noiseSuppression") !== "false",
   sampleRate:
     !isNaN(Number(urlParams.get("sampleRate"))) &&
-    Number(urlParams.get("sampleRate")) >= 8000 &&
-    Number(urlParams.get("sampleRate")) <= 64000
+      Number(urlParams.get("sampleRate")) >= 8000 &&
+      Number(urlParams.get("sampleRate")) <= 64000
       ? Number(urlParams.get("sampleRate"))
       : 44000,
   channelCount:
     !isNaN(Number(urlParams.get("channelCount"))) &&
-    Number(urlParams.get("channelCount")) >= 1 &&
-    Number(urlParams.get("channelCount")) <= 8
+      Number(urlParams.get("channelCount")) >= 1 &&
+      Number(urlParams.get("channelCount")) <= 8
       ? Number(urlParams.get("channelCount"))
       : 1,
   msRegion: "us", // Default region
@@ -226,10 +226,14 @@ document
     event.preventDefault();
 
     const roomId = document.getElementById("roomId").value;
-    
+    const peerName = document.getElementById("peerName").value;
 
     if (!roomId) {
       alert("Please provide RoomId to join.");
+      return;
+    }
+    if (!peerName) {
+      alert("Enter your name");
       return;
     }
 
@@ -259,15 +263,16 @@ document
         roomId,
         peerName,
       };
-      
+
 
       try {
         vidScaleClient = await samvyo.JsSdk.init(initialParams);
         console.log("Successfully inistialised the room:", vidScaleClient);
 
         vidScaleClient.on("initSuccess", async () => {
-          console.log("Init successful — auto-joining room...");
+
           const peerName = document.getElementById("peerName").value;
+
 
           const moderatorCheckbox = document.getElementById("moderatorCheckbox");
           if (moderatorCheckbox && moderatorCheckbox.checked) {
@@ -285,11 +290,12 @@ document
           console.log("Auto-joining with params:", joinParams);
           try {
             await vidScaleClient.joinRoom(joinParams);
-             
+
             removeAllPeers(); // Clear any stale peer tiles from a previous session
             document.getElementById("lobby-page").classList.add("hidden");
             document.getElementById("call-page").classList.remove("hidden");
             document.getElementById("call-page").classList.add("flex");
+            resetControls();
             const displayRoomId = document.getElementById('call-room-id-display');
             if (displayRoomId) displayRoomId.textContent = roomId;
             document.getElementById("leaveButton").disabled = false;
@@ -327,8 +333,8 @@ document
           try {
             const container = document.getElementById("captionsContainer");
             if (container) container.style.display = "block";
-          } catch {}
-          try { vidScaleClient.setCaptionPreference && vidScaleClient.setCaptionPreference(true); } catch {}
+          } catch { }
+          try { vidScaleClient.setCaptionPreference && vidScaleClient.setCaptionPreference(true); } catch { }
           try { vidScaleClient.startTranscription && vidScaleClient.startTranscription(); } catch (e) { console.warn("startTranscription not available", e); }
         });
 
@@ -337,13 +343,13 @@ document
           updatePeerAudio(peerId, audioTrack, type);
           if (type === "remote")
             document.getElementById("additional").style.display = "none";
-          try { if (audioTrack) addTrackToTxMixer(peerId, audioTrack); } catch {}
+          try { if (audioTrack) addTrackToTxMixer(peerId, audioTrack); } catch { }
         });
 
         vidScaleClient.on("micEnd", ({ peerId }) => {
           console.log(`Mic ended for peer: ${peerId}`);
           removePeerAudio(peerId);
-          try { removeTrackFromTxMixer(peerId); } catch {}
+          try { removeTrackFromTxMixer(peerId); } catch { }
         });
 
         vidScaleClient.on("peerMuted", ({ peerId, type }) => {
@@ -367,7 +373,7 @@ document
           updatePeerVideo(peerId, videoTrack, type);
           const peer = peers.get(peerId);
           if (peer) {
-             if (peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
+            if (peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
           }
         });
 
@@ -420,7 +426,8 @@ document
           alert(`${eventType}: ${eventText}`);
         });
 
-        vidScaleClient.on("roomClosed", ({roomId}) => {
+        vidScaleClient.on("roomClosed", ({ roomId }) => {
+          resetControls();
           removeAllPeers();
           showThankYouMessage();
           // Go back to lobby
@@ -432,12 +439,12 @@ document
           document.getElementById("closeButton").classList.add("hidden");
           alert("room closed by moderator!");
           clearCaptions();
-          try { stopTxRecorder(); } catch {}
-          try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+          try { stopTxRecorder(); } catch { }
+          try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
         });
-        
-   
-        vidScaleClient.on("customMessage", async (message) => {
+
+
+        vidScaleClient.on("Message", async (message) => {
           try {
             console.log("customMessage", message);
             // Expecting message.type === 'transcription' and message.messageType === 'deepgram:transcript'
@@ -469,11 +476,12 @@ document
 document.getElementById("leaveButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.leaveRoom();
-     const screenShareList = document.getElementById("screenShareList");
+    resetControls();
+    const screenShareList = document.getElementById("screenShareList");
     screenShareList.innerHTML = "";
     screenShares.clear();
-    
-    
+
+
     // UI Page Toggle back to lobby
     document.getElementById("call-page").classList.add("hidden");
     document.getElementById("call-page").classList.remove("flex");
@@ -485,15 +493,15 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch {}
-    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+    try { stopTxRecorder(); } catch { }
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
 document.getElementById("closeButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.closeRoom();
-    console.log("Closed the room");
-    
+    resetControls();
+
     // UI Page Toggle back to lobby
     document.getElementById("call-page").classList.add("hidden");
     document.getElementById("call-page").classList.remove("flex");
@@ -508,8 +516,8 @@ document.getElementById("closeButton").addEventListener("click", async () => {
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch {}
-    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+    try { stopTxRecorder(); } catch { }
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
 
@@ -545,7 +553,7 @@ document.getElementById("closeButton").addEventListener("click", async () => {
 //   }
 // });
 
-function showModAuth({requesterName,requesterPeerId,text}){
+function showModAuth({ requesterName, requesterPeerId, text }) {
   const div = document.getElementById("additional");
   var span = document.createElement("span");
   span.innerHTML = text;
@@ -623,6 +631,31 @@ function removeSSVideo(peerId, videoTrack, type) {
   screenShares.delete(peerId);
 }
 
+function resetControls() {
+  // Mic
+  const micBtn = document.getElementById("mute-button");
+  if (micBtn) {
+    micBtn.querySelector("span").textContent = "mic";
+    micBtn.classList.remove("bg-meetRed", "hover:bg-red-600");
+    micBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+
+  // Camera
+  const camBtn = document.getElementById("cam-toggle-button");
+  if (camBtn) {
+    camBtn.querySelector("span").textContent = "videocam";
+    camBtn.classList.remove("bg-meetRed", "hover:bg-red-600");
+    camBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+
+  // Screen Share
+  const shareBtn = document.getElementById("share-screen-button");
+  if (shareBtn) {
+    shareBtn.querySelector("span").textContent = "present_to_all";
+    shareBtn.classList.remove("bg-meetBlue", "hover:bg-blue-400", "text-gray-900");
+    shareBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+}
 function addPeer(peerId, peerName, type) {
   if (!peers.has(peerId)) {
     const peerCard = document.createElement("div");
@@ -662,84 +695,85 @@ function addPeer(peerId, peerName, type) {
     if (muteStatusMessage) peerCard.appendChild(muteStatusMessage);
 
     if (type === "local") {
-        const localControls = document.getElementById('local-controls-container');
-        
-        // Ensure we only append these once or cleanly recreate them
-        let peerMuteButton = document.getElementById('mute-button');
-        if (!peerMuteButton) {
-            peerMuteButton = document.createElement("button");
-            peerMuteButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
-            peerMuteButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">mic</span>`;
-            peerMuteButton.id = "mute-button";
-            peerMuteButton.title = "Toggle Microphone";
-            // Insert before leave button
-            localControls.insertBefore(peerMuteButton, document.getElementById('leaveButton'));
-        
+      const localControls = document.getElementById('local-controls-container');
 
-            const camToggleButton = document.createElement("button");
-            camToggleButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
-            camToggleButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">videocam</span>`;
-            camToggleButton.id = "cam-toggle-button";
-            camToggleButton.title = "Toggle Camera";
-            localControls.insertBefore(camToggleButton, document.getElementById('leaveButton'));
+      // Ensure we only append these once or cleanly recreate them
+      let peerMuteButton = document.getElementById('mute-button');
+      if (!peerMuteButton) {
+        peerMuteButton = document.createElement("button");
+        peerMuteButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        peerMuteButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">mic</span>`;
+        peerMuteButton.id = "mute-button";
+        peerMuteButton.title = "Toggle Microphone";
+        // Insert before leave button
+        localControls.insertBefore(peerMuteButton, document.getElementById('leaveButton'));
 
-            const shareScreenButton = document.createElement("button");
-            shareScreenButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
-            shareScreenButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">present_to_all</span>`;
-            shareScreenButton.id = "share-screen-button";
-            shareScreenButton.title = "Present Screen";
-            localControls.insertBefore(shareScreenButton, document.getElementById('leaveButton'));
 
-            // Event Listeners
-            peerMuteButton.addEventListener("click", async () => {
-                const icon = peerMuteButton.querySelector('span');
-                if (icon.textContent === "mic_off") {
-                await vidScaleClient.unmuteMic();
-                icon.textContent = "mic";
-                peerMuteButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
-                peerMuteButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
-                } else {
-                await vidScaleClient.muteMic();
-                icon.textContent = "mic_off";
-                peerMuteButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                peerMuteButton.classList.add('bg-meetRed', 'hover:bg-red-600');
-                }
-            });
+        const camToggleButton = document.createElement("button");
+        camToggleButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        camToggleButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">videocam</span>`;
+        camToggleButton.id = "cam-toggle-button";
+        camToggleButton.title = "Toggle Camera";
+        localControls.insertBefore(camToggleButton, document.getElementById('leaveButton'));
 
-            shareScreenButton.addEventListener("click", async () => {
-                const icon = shareScreenButton.querySelector('span');
-                if (icon.textContent === "present_to_all") {
-                    await vidScaleClient.enableShare();
-                    icon.textContent = "cancel_presentation";
-                    shareScreenButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                    shareScreenButton.classList.add('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
-                } else {
-                    await vidScaleClient.disableShare();
-                    icon.textContent = "present_to_all";
-                    shareScreenButton.classList.remove('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
-                    shareScreenButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
-                }
-            });
+        const shareScreenButton = document.createElement("button");
+        shareScreenButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        shareScreenButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">present_to_all</span>`;
+        shareScreenButton.id = "share-screen-button";
+        shareScreenButton.title = "Present Screen";
+        localControls.insertBefore(shareScreenButton, document.getElementById('leaveButton'));
 
-            camToggleButton.addEventListener("click", async () => {
-                const icon = camToggleButton.querySelector('span');
-                const peer = peers.get(peerId);
-                if (icon.textContent === "videocam_off") {
-                    await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
-                    icon.textContent = "videocam";
-                    camToggleButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
-                    camToggleButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
-                    if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
-                } else {
-                    await vidScaleClient.disableCam();
-                    icon.textContent = "videocam_off";
-                    camToggleButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                    camToggleButton.classList.add('bg-meetRed', 'hover:bg-red-600');
-                    if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.remove('hidden');
-                }
-            });
-        }
+        // Event Listeners
+        peerMuteButton.addEventListener("click", async () => {
+          const icon = peerMuteButton.querySelector('span');
+          if (icon.textContent === "mic_off") {
+            await vidScaleClient.unmuteMic();
+            icon.textContent = "mic";
+            peerMuteButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
+            peerMuteButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+          } else {
+            await vidScaleClient.muteMic();
+            icon.textContent = "mic_off";
+            peerMuteButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            peerMuteButton.classList.add('bg-meetRed', 'hover:bg-red-600');
+          }
+        });
+
+        shareScreenButton.addEventListener("click", async () => {
+          const icon = shareScreenButton.querySelector('span');
+          if (icon.textContent === "present_to_all") {
+            await vidScaleClient.enableShare();
+            icon.textContent = "cancel_presentation";
+            shareScreenButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            shareScreenButton.classList.add('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
+          } else {
+            await vidScaleClient.disableShare();
+            icon.textContent = "present_to_all";
+            shareScreenButton.classList.remove('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
+            shareScreenButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+          }
+        });
+
+        camToggleButton.addEventListener("click", async () => {
+          const icon = camToggleButton.querySelector('span');
+          const peer = peers.get(peerId);
+          if (icon.textContent === "videocam_off") {
+            await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
+            icon.textContent = "videocam";
+            camToggleButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
+            camToggleButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
+          } else {
+            await vidScaleClient.disableCam();
+            icon.textContent = "videocam_off";
+            camToggleButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            camToggleButton.classList.add('bg-meetRed', 'hover:bg-red-600');
+            if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.remove('hidden');
+          }
+        });
+      }
     }
+
 
     document.getElementById("peerList").appendChild(peerCard);
     peers.set(peerId, {
@@ -846,7 +880,7 @@ function renderCaptions() {
     });
     // Auto scroll to bottom
     feed.scrollTop = feed.scrollHeight;
-  } catch {}
+  } catch { }
 }
 
 function upsertCaption(peerId, text, isFinal) {
@@ -883,9 +917,9 @@ function clearCaptions() {
     if (feed) feed.innerHTML = "";
     const container = document.getElementById("captionsContainer");
     if (container) container.style.display = "none";
-  } catch {}
+  } catch { }
 }
-     //settings Toggle
+//settings Toggle
 const settingsBtn = document.getElementById("settingsButton");
 const settingsPanel = document.getElementById("settingsDropdown");
 
