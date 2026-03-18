@@ -885,7 +885,7 @@ function clearCaptions() {
     if (container) container.style.display = "none";
   } catch {}
 }
-// ===== Settings Toggle =====
+     //settings Toggle
 const settingsBtn = document.getElementById("settingsButton");
 const settingsPanel = document.getElementById("settingsDropdown");
 
