@@ -1,124 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samvyo Demo</title>
-    <!-- <script src="samvyo-js.js"> -->
-    </script> 
-    <!-- Ensure this path is correct -->
-   <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
-    <script src="script.js" defer></script>
-    <style>
-        video {
-            width: 300px;
-            height: 200px;
-            border: 1px solid black;
+    <title>Samvyo Demo - Meet</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Google Material Symbols (Google Meet style icons) -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }, //script is used for faster loading of tailwind
+                    colors: {
+                        dark: '#202124',
+                        meetBlue: '#8ab4f8',
+                        meetRed: '#ea4335',
+                        meetGray: '#3c4043'
+                    }
+                }
+            }
         }
-        
-        .peer-card, .ss-card {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 10px 0;
-            width: 350px;
+    </script>
+
+    <style>
+        /* Base styles that Tailwind might not cover exactly */
+        body {
+            background-color: #202124;
+            color: white;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
-        
-        .peer-card video, .ss-card video {
+
+        /* Active screen share button */
+        .screen-share-active {
+            background-color: #8ab4f8 !important;
+            color: #202124 !important;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        select option {
+            background-color: #202124;
+            color: white;
+        }
+
+
+
+        /* Video grid dynamically injected styles */
+        .peer-card {
+            position: relative;
+            background-color: #3c4043;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
             width: 100%;
-            height: auto;
-            border: 1px solid black;
-        }
-        
-        .peer-list, .screen-share-list {
-            margin-top: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .peer-media{
-            display: flex;
-            padding-right: 20px;
+            height: 100%;
+            min-height: 200px;
         }
 
-        .device-list{
-            margin-top: 20px;
-            display: flex;
-            width: 30vw;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            
+        .peer-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .join-room{
-            width: 30vw;
+        .peer-name-badge {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 8px;
+            z-index: 10;
         }
 
-        #audioInput{
-            margin-right: 10px;
-            width: 14.5vw;
-    
-        }
-
-        #videoInput{
+        .mute-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px;
+            border-radius: 50%;
             display: flex;
-            width: 14.5vw;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            font-size: 18px;
+            color: #ea4335;
         }
-        
-    </style>
-</head>
-<body>
-    <h1>Samvyo Demo</h1>
-    <!-- <div>
-        <video id="localVideo" autoplay muted></video>
-        <video id="remoteVideo" autoplay></video>
-    </div> -->
-    <form type="submit" class="join-room">
-        <input id="roomId" placeholder="Enter room Id" required></input>
-        <input id="peerName" placeholder="Enter peerName"></input>
-        <button id="initButton">Init Room</button>
-    </form>
-    
-    <div class="device-list">
-        <div>
-        <label for="audioInput">Choose audio input:</label>
-        <select id="audioInput">
-            <option value="">Select Audio Device</option>
-        </select>
-        </div>
-        <div>
-        <label for="videoInput">Choose video input:</label>
-        <select id="videoInput">
-            <option value="">Select Video Device</option>
-        </select>
-        </div>
-    </div>
-    <button id="joinButton" disabled> Join Room</button>
-    <button id="leaveButton" disabled>Leave Room</button>
-    <button id="closeButton" disabled>Close Roo</button>
-<div id="additional"></div>
-<div id="notification"></div>
-    <div class="peer-list" id="peerList">
-        <!-- Peers will be listed here -->
-    </div>
-    <div class="screen-share-list" id="screenShareList" >
 
+        .ss-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            border-radius: 0.75rem;
+        }
+    </style>
+
+    <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+
+
+    <div id="lobby-page" class="flex flex-col items-center justify-center min-h-screen p-4 w-full">
+        <div class="max-w-md w-full bg-meetGray rounded-2xl p-8 shadow-2xl border border-gray-700">
+            <h1 class="text-3xl font-semibold mb-6 text-center tracking-tight">Ready to join?</h1>
+
+            <form class="space-y-6">
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xl p-1 font-regular mb-6 text-center tracking-tight">Room ID</label>
+                        <input id="roomId" placeholder="Enter Room ID" required autocomplete="off"
+                            class="w-full bg-dark text-white border border-gray-600 rounded-md px-4 py-3 focus:outline-none focus:border-meetBlue focus:ring-1 focus:ring-meetBlue transition-colors">
+                    </div>
+                    <div>
+                        <label class="text-xl p-1 font-regular mb-6 text-center tracking-tight">Peer Name</label>
+                        <input id="peerName" placeholder="Peer Name" autocomplete="off"
+                            class="w-full bg-dark text-white border border-gray-600 rounded-md px-4 py-3 focus:outline-none focus:border-meetBlue focus:ring-1 focus:ring-meetBlue transition-colors">
+                    </div>
+                </div>
+
+
+
+                <div id="moderatorToggleRow" class="flex items-center gap-3 pt-3 pb-1 border-t border-gray-600"
+                    onclick="toggleModeratorRole()" style="cursor:pointer;user-select:none;">
+                    <div id="toggleTrack"
+                        style="width:44px;height:24px;background:#4b5563;border-radius:999px;position:relative;flex-shrink:0;transition:background 0.25s;">
+                        <div id="toggleThumb"
+                            style="width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:left 0.25s;">
+                        </div>
+                    </div>
+                    <input type="checkbox" id="moderatorCheckbox" style="display:none;">
+                    <div>
+                        <p id="toggleLabel" class="text-sm font-medium" style="color:#d1d5db;">Join as Participant</p>
+                        <p class="text-xs text-gray-500">Toggle to join as Moderator </p>
+                    </div>
+                </div>
+
+
+                <div class="flex flex-col gap-3 pt-3">
+                    <button id="initButton" type="button"
+                        class="w-full bg-meetBlue hover:bg-blue-400 text-gray-900 font-semibold py-3 rounded-full transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">video_call</span>
+                        Join Room
+                    </button>
+                </div>
+            </form>
+
+            <script>
+                function toggleModeratorRole() {
+                    const cb = document.getElementById('moderatorCheckbox');
+                    const track = document.getElementById('toggleTrack');
+                    const thumb = document.getElementById('toggleThumb');
+                    const label = document.getElementById('toggleLabel');
+                    cb.checked = !cb.checked;
+                    if (cb.checked) {
+                        track.style.background = '#8ab4f8';
+                        thumb.style.left = '23px';
+                        label.textContent = 'Join as Moderator';
+                        label.style.color = '#8ab4f8';
+                    } else {
+                        track.style.background = '#4b5563';
+                        thumb.style.left = '3px';
+                        label.textContent = 'Join as Participant';
+                        label.style.color = '#d1d5db';
+                    }
+                }
+            </script>
+        </div>
     </div>
-    <div id="captionsContainer" style="position:fixed; left:0; right:0; bottom:12px; z-index:1000; display:none;">
-        <div id="captionsPanel" style="margin:0 auto; max-width:800px; background: rgba(0,0,0,0.55); color:#fff; border-radius:8px; padding:8px 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:6px;">
-                <strong style="font-size:14px; opacity:0.9;">Live Captions</strong>
-                <span id="captionsHint" style="font-size:11px; opacity:0.8;">Transcription is on</span>
+
+
+    <!-- PAGE 2: IN-CALL STAGE (Hidden initially) -->
+    <div id="call-page" class="hidden flex-col h-screen w-full relative">
+
+        <!-- Notifications / Additional Info -->
+        <div id="additional" class="absolute top-4 left-4 z-50 text-sm bg-blue-900/80 px-4 py-2 rounded-md hidden">
+        </div>
+        <div id="notification" class="absolute top-16 left-4 z-50 text-sm bg-red-900/80 px-4 py-2 rounded-md hidden">
+        </div>
+
+        <!-- Main Video Grid Area -->
+        <div class="flex-1 p-4 lg:p-6 pb-24 overflow-y-auto">
+            <div id="screenShareList" class="flex flex-col gap-4 mb-4"></div>
+            <div id="peerList"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[minmax(250px,350px)]">
+                <!-- Peers will be injected here via script.js -->
             </div>
-            <div id="captionsFeed" style="max-height:180px; overflow-y:auto; font-size:13px; line-height:1.35;"></div>
+            <div id="settingsDropdown"
+                class="hidden absolute top-4 right-4 z-50 w-[90%] max-w-sm bg-meetGray border border-gray-600 rounded-xl p-4 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+
+                    <h3 class="text-sm font-semibold text-white">
+                        Device Settings
+                    </h3>
+
+                    <!-- Close Settings Button -->
+                    <button id="closeSettingsBtn"
+                        class="text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                        title="Close settings">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+
+                </div>
+                <div class=" flex  flex-col gap-4 ">
+                    <div>
+                        <label for="audioInput" class="flex   gap-2 text-xs font-medium text-gray-300 mb-1">
+                            <span class="material-symbols-outlined text-[16px] text-meetBlue">mic</span> Microphone
+                        </label>
+                        <select id="audioInput"
+                            class="w-full bg-dark text-white border border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-meetBlue appearance-none">
+                            <option value="">Select Audio Device</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="videoInput" class="flex  gap-2 text-xs font-medium text-gray-300 mb-1">
+                            <span class="material-symbols-outlined text-[16px] text-meetBlue">videocam</span> Camera
+                        </label>
+                        <select id="videoInput"
+                            class="w-full bg-dark text-white border border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-meetBlue appearance-none">
+                            <option value="">Select Video Device</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Captions (Overlay on bottom) -->
+        <div id="captionsContainer"
+            class="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-3xl z-40 hidden pointer-events-none">
+            <div id="captionsPanel" class="bg-black/70 backdrop-blur-md rounded-lg p-4 pointer-events-auto">
+                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-white/20">
+                    <strong class="text-sm">Live Captions</strong>
+                    <span id="captionsHint" class="text-xs text-gray-300 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Transcription is on
+                    </span>
+                </div>
+                <div id="captionsFeed" class="max-h-32 overflow-y-auto text-sm leading-relaxed space-y-1"></div>
+            </div>
+        </div>
+
+        <div
+            class="h-20 bg-dark w-full flex items-center justify-between px-6 border-t border-gray-700 fixed bottom-0 z-50">
+            <div class="text-white font-medium truncate w-1/4 hidden md:block" id="call-room-id-display">
+                <!-- Updated via JS on join -->
+            </div>
+            <!-- Central Controls (Dynamically injected local peer buttons will attach styles here logically, or via script update. For now we just style the Leave/Close buttons) -->
+            <div class="flex items-center justify-center gap-4 flex-1" id="local-controls-container">
+
+
+
+                <!-- Leave Button -->
+                <button id="leaveButton" disabled
+                    class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-50 group"
+                    title="Leave call">
+                    <span class="material-symbols-outlined text-[24px]">call_end</span>
+                </button>
+                <!-- Settings Button -->
+                <button id="settingsButton"
+                    class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                    title="Settings">
+                    <span class="material-symbols-outlined text-[24px]">settings</span>
+                </button>
+
+                <!-- Close Button (Moderator only) -->
+
+
+            </div>
+
+            <div class="w-1/4 pr-4 flex justify-end items-center">
+
+                <button id="closeButton" disabled
+                    class="hidden bg-meetRed hover:bg-red-600 text-white rounded-full px-6 h-12 flex items-center justify-center font-medium transition-colors disabled:opacity-50 shadow-md"
+                    title="Close Room (Host)">
+                    Close
+                </button>
+
+            </div>
+
+
+        </div>
+    </div>
+    <div id="joiningLoader" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+        <div class="bg-meetGray px-6 py-4 rounded-lg flex items-center gap-3 shadow-lg">
+            <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            <span class="text-white text-sm">Joining the room...</span>
         </div>
     </div>
 </body>
+
 </html>

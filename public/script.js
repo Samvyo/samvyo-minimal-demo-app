@@ -40,10 +40,10 @@ function startTxRecorder() {
         reader.onload = () => {
           const base64Audio = reader.result.split(',')[1];
           const activeId = vidScaleClient?.data?.inputParams?.peerId || 'unknown';
-          try { vidScaleClient.sendAudioForTranscription(base64Audio, activeId); } catch(err) { console.warn('sendAudioForTranscription failed', err); }
+          try { vidScaleClient.sendAudioForTranscription(base64Audio, activeId); } catch (err) { console.warn('sendAudioForTranscription failed', err); }
         };
         reader.readAsDataURL(event.data);
-      } catch(err) { console.warn('tx recorder ondataavailable error', err); }
+      } catch (err) { console.warn('tx recorder ondataavailable error', err); }
     };
     rec.onerror = (err) => console.warn('tx recorder error', err);
     rec.start(1000);
@@ -52,9 +52,10 @@ function startTxRecorder() {
 }
 
 function stopTxRecorder() {
-  try { if (txRecorder && txRecorder.state !== 'inactive') txRecorder.stop(); } catch {}
+  try { if (txRecorder && txRecorder.state !== 'inactive') txRecorder.stop(); } catch { }
   txRecorder = null;
 }
+
 
 function addTrackToTxMixer(peerId, audioTrack) {
   try {
@@ -76,11 +77,11 @@ function removeTrackFromTxMixer(peerId) {
   try {
     const source = txSourceNodes.get(peerId);
     const gain = txGainNodes.get(peerId);
-    try { gain && gain.disconnect(); } catch {}
-    try { source && source.disconnect(); } catch {}
+    try { gain && gain.disconnect(); } catch { }
+    try { source && source.disconnect(); } catch { }
     txSourceNodes.delete(peerId);
     txGainNodes.delete(peerId);
-  } catch {}
+  } catch { }
 }
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -95,31 +96,31 @@ const inputParams = {
   h264Profile: urlParams.get("h264Profile") === "low" ? "low" : "high",
   forceFPS:
     !isNaN(Number(urlParams.get("forceFPS"))) &&
-    Number(urlParams.get("forceFPS")) > 0 &&
-    Number(urlParams.get("forceFPS")) <= 60
+      Number(urlParams.get("forceFPS")) > 0 &&
+      Number(urlParams.get("forceFPS")) <= 60
       ? Number(urlParams.get("forceFPS"))
       : 30,
   enableWebcamLayers: urlParams.get("enableWebcamLayers") !== "false",
   numSimulcastStreams:
     !isNaN(Number(urlParams.get("numSimulcastStreams"))) &&
-    Number(urlParams.get("numSimulcastStreams")) > 0 &&
-    Number(urlParams.get("numSimulcastStreams")) <= 3
+      Number(urlParams.get("numSimulcastStreams")) > 0 &&
+      Number(urlParams.get("numSimulcastStreams")) <= 3
       ? Number(urlParams.get("numSimulcastStreams"))
       : 3,
   videoBitRates: [
     !isNaN(Number(urlParams.get("videoBitRateHigh"))) &&
-    Number(urlParams.get("videoBitRateHigh")) > 50 &&
-    Number(urlParams.get("videoBitRateHigh")) <= 1000
+      Number(urlParams.get("videoBitRateHigh")) > 50 &&
+      Number(urlParams.get("videoBitRateHigh")) <= 1000
       ? Number(urlParams.get("videoBitRateHigh"))
       : 500,
     !isNaN(Number(urlParams.get("videoBitRateMedium"))) &&
-    Number(urlParams.get("videoBitRateMedium")) > 30 &&
-    Number(urlParams.get("videoBitRateMedium")) <= 300
+      Number(urlParams.get("videoBitRateMedium")) > 30 &&
+      Number(urlParams.get("videoBitRateMedium")) <= 300
       ? Number(urlParams.get("videoBitRateMedium"))
       : 250,
     !isNaN(Number(urlParams.get("videoBitRateLow"))) &&
-    Number(urlParams.get("videoBitRateLow")) > 10 &&
-    Number(urlParams.get("videoBitRateLow")) <= 125
+      Number(urlParams.get("videoBitRateLow")) > 10 &&
+      Number(urlParams.get("videoBitRateLow")) <= 125
       ? Number(urlParams.get("videoBitRateLow"))
       : 100,
   ],
@@ -128,20 +129,20 @@ const inputParams = {
   noiseSuppression: urlParams.get("noiseSuppression") !== "false",
   sampleRate:
     !isNaN(Number(urlParams.get("sampleRate"))) &&
-    Number(urlParams.get("sampleRate")) >= 8000 &&
-    Number(urlParams.get("sampleRate")) <= 64000
+      Number(urlParams.get("sampleRate")) >= 8000 &&
+      Number(urlParams.get("sampleRate")) <= 64000
       ? Number(urlParams.get("sampleRate"))
       : 44000,
   channelCount:
     !isNaN(Number(urlParams.get("channelCount"))) &&
-    Number(urlParams.get("channelCount")) >= 1 &&
-    Number(urlParams.get("channelCount")) <= 8
+      Number(urlParams.get("channelCount")) >= 1 &&
+      Number(urlParams.get("channelCount")) <= 8
       ? Number(urlParams.get("channelCount"))
       : 1,
   msRegion: "us", // Default region
   backgroundImage: "", // Placeholder for image link
   authenticationRequired: urlParams.get("auth") === "true",
-  peerType: urlParams.get("peerType") || "participant",
+  peerType: urlParams.get("role") === "moderator" ? "moderator" : "participant", // Read from ?role=moderator or ?role=participant
   password: urlParams.get("password"),
 };
 
@@ -201,28 +202,47 @@ const populateDeviceSelects = (audioDevices, videoDevices) => {
   audioSelect.addEventListener("change", async (event) => {
     selectedAudioDeviceId = event.target.value;
     console.log("Selected Audio Device ID:", selectedAudioDeviceId);
-    await vidScaleClient.changeAudioInput({ deviceId: selectedAudioDeviceId });
+    // If a call is active, switch the input immediately
+    if (vidScaleClient && vidScaleClient.changeAudioInput) {
+      await vidScaleClient.changeAudioInput({ deviceId: selectedAudioDeviceId });
+    }
   });
 
   videoSelect.addEventListener("change", async (event) => {
     selectedVideoDeviceId = event.target.value;
     console.log("Selected Video Device ID:", selectedVideoDeviceId);
-    await vidScaleClient.changeVideoInput({ deviceId: selectedVideoDeviceId });
+    // If a call is active, switch the input immediately
+    if (vidScaleClient && vidScaleClient.changeVideoInput) {
+      await vidScaleClient.changeVideoInput({ deviceId: selectedVideoDeviceId });
+    }
   });
 };
 
 getAllDevices();
+
+
 
 document
   .getElementById("initButton")
   .addEventListener("click", async (event) => {
     event.preventDefault();
 
+    const loader = document.getElementById("joiningLoader");
+    loader.classList.remove("hidden");
+    // Disable join button
+    const joinBtn = document.getElementById("initButton");
+    joinBtn.textContent = "Joining...";
+    joinBtn.disabled = true;
+
     const roomId = document.getElementById("roomId").value;
-    
+    const peerName = document.getElementById("peerName").value;
 
     if (!roomId) {
       alert("Please provide RoomId to join.");
+      return;
+    }
+    if (!peerName) {
+      alert("Enter your name");
       return;
     }
 
@@ -252,14 +272,49 @@ document
         roomId,
         peerName,
       };
-      
+
 
       try {
         vidScaleClient = await samvyo.JsSdk.init(initialParams);
         console.log("Successfully inistialised the room:", vidScaleClient);
 
         vidScaleClient.on("initSuccess", async () => {
-         
+
+          const peerName = document.getElementById("peerName").value;
+
+
+          const moderatorCheckbox = document.getElementById("moderatorCheckbox");
+          if (moderatorCheckbox && moderatorCheckbox.checked) {
+            inputParams.peerType = "moderator";
+          }
+
+          const joinParams = {
+            peerName,
+            produce: true,
+            consume: true,
+            audioDeviceId: selectedAudioDeviceId,
+            videoDeviceId: selectedVideoDeviceId,
+            ...inputParams,
+          };
+          console.log("Auto-joining with params:", joinParams);
+          try {
+            await vidScaleClient.joinRoom(joinParams);
+
+            removeAllPeers(); // Clear any stale peer tiles from a previous session
+            document.getElementById("lobby-page").classList.add("hidden");
+            document.getElementById("call-page").classList.remove("hidden");
+            document.getElementById("call-page").classList.add("flex");
+            resetControls();
+            const displayRoomId = document.getElementById('call-room-id-display');
+            if (displayRoomId) displayRoomId.textContent = roomId;
+            document.getElementById("leaveButton").disabled = false;
+            if (inputParams.peerType === "moderator") {
+              document.getElementById("closeButton").disabled = false;
+              document.getElementById("closeButton").classList.remove("hidden");
+            }
+          } catch (joinErr) {
+            console.error("Error auto-joining room:", joinErr);
+          }
         });
 
         // Set up event listeners
@@ -287,8 +342,8 @@ document
           try {
             const container = document.getElementById("captionsContainer");
             if (container) container.style.display = "block";
-          } catch {}
-          try { vidScaleClient.setCaptionPreference && vidScaleClient.setCaptionPreference(true); } catch {}
+          } catch { }
+          try { vidScaleClient.setCaptionPreference && vidScaleClient.setCaptionPreference(true); } catch { }
           try { vidScaleClient.startTranscription && vidScaleClient.startTranscription(); } catch (e) { console.warn("startTranscription not available", e); }
         });
 
@@ -297,21 +352,20 @@ document
           updatePeerAudio(peerId, audioTrack, type);
           if (type === "remote")
             document.getElementById("additional").style.display = "none";
-          try { if (audioTrack) addTrackToTxMixer(peerId, audioTrack); } catch {}
+          try { if (audioTrack) addTrackToTxMixer(peerId, audioTrack); } catch { }
         });
 
         vidScaleClient.on("micEnd", ({ peerId }) => {
           console.log(`Mic ended for peer: ${peerId}`);
           removePeerAudio(peerId);
-          try { removeTrackFromTxMixer(peerId); } catch {}
+          try { removeTrackFromTxMixer(peerId); } catch { }
         });
 
         vidScaleClient.on("peerMuted", ({ peerId, type }) => {
           console.log(`Peer muted: ${peerId}`);
           const peer = peers.get(peerId);
           if (peer && type === "remote") {
-            peer.muteStatusMessage.textContent = "Muted";
-            peer.muteStatusMessage.style.display = "block"; // Show the message
+            if (peer.muteStatusMessage) peer.muteStatusMessage.classList.remove('hidden');
           }
         });
 
@@ -319,18 +373,41 @@ document
           console.log(`Peer unmuted: ${peerId}`);
           const peer = peers.get(peerId);
           if (peer && type === "remote") {
-            peer.muteStatusMessage.textContent = "Unmuted";
-            peer.muteStatusMessage.style.display = "block"; // Show the message
+            if (peer.muteStatusMessage) peer.muteStatusMessage.classList.add('hidden');
           }
         });
 
         vidScaleClient.on("videoStart", ({ peerId, videoTrack, type }) => {
           console.log(`Video started for peer: ${peerId}`);
+
           updatePeerVideo(peerId, videoTrack, type);
           const peer = peers.get(peerId);
-          if (peer && type === "remote") {
-            peer.camStatusMessage.textContent = "Camera turned on"; // Update status message
-            peer.camStatusMessage.style.display = "block"; // Show the message
+          if (peer) {
+            if (peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
+          }
+
+          // Only when local camera starts
+          if (type === "local") {
+
+            // Hide loader
+            document.getElementById("joiningLoader").classList.add("hidden");
+
+            // Switch UI
+            document.getElementById("lobby-page").classList.add("hidden");
+            document.getElementById("call-page").classList.remove("hidden");
+            document.getElementById("call-page").classList.add("flex");
+
+            resetControls();
+
+            document.getElementById("leaveButton").disabled = false;
+
+            const displayRoomId = document.getElementById("call-room-id-display");
+            if (displayRoomId) displayRoomId.textContent =
+              document.getElementById("roomId").value;
+
+            const joinBtn = document.getElementById("initButton");
+            joinBtn.textContent = "Join Room";
+            joinBtn.disabled = false;
           }
         });
 
@@ -338,8 +415,7 @@ document
           console.log(`Video ended for peer: ${peerId}`);
           const peer = peers.get(peerId);
           if (peer) {
-            peer.camStatusMessage.textContent = "Camera turned off"; // Update status message
-            peer.camStatusMessage.style.display = "block"; // Show the message
+            if (peer.camStatusMessage) peer.camStatusMessage.classList.remove('hidden');
           }
           removePeerVideo(peerId, type);
         });
@@ -384,19 +460,25 @@ document
           alert(`${eventType}: ${eventText}`);
         });
 
-        vidScaleClient.on("roomClosed", ({roomId}) => {
-          removeAllPeers(); //removes the peerList div upon leaving the room
+        vidScaleClient.on("roomClosed", ({ roomId }) => {
+          resetControls();
+          removeAllPeers();
           showThankYouMessage();
+          // Go back to lobby
+          document.getElementById("call-page").classList.add("hidden");
+          document.getElementById("call-page").classList.remove("flex");
+          document.getElementById("lobby-page").classList.remove("hidden");
           document.getElementById("leaveButton").disabled = true;
-          document.getElementById("joinButton").disabled = false;
+          document.getElementById("closeButton").disabled = true;
+          document.getElementById("closeButton").classList.add("hidden");
           alert("room closed by moderator!");
           clearCaptions();
-          try { stopTxRecorder(); } catch {}
-          try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+          try { stopTxRecorder(); } catch { }
+          try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
         });
-        
-   
-        vidScaleClient.on("customMessage", async (message) => {
+
+
+        vidScaleClient.on("Message", async (message) => {
           try {
             console.log("customMessage", message);
             // Expecting message.type === 'transcription' and message.messageType === 'deepgram:transcript'
@@ -416,8 +498,7 @@ document
             console.warn("customMessage captions handler error", err);
           }
         });
-        // document.getElementById("processVideosButton").disabled = false;
-        document.getElementById("joinButton").disabled = false;
+        // Init done — auto-join fires via initSuccess above
       } catch (error) {
         console.error("Error joining room:", error);
       }
@@ -425,61 +506,52 @@ document
       alert("Failed to fetch session token.");
     }
   });
-document.getElementById("joinButton").addEventListener("click", async () => {
-  if (vidScaleClient) {
-    const peerName = document.getElementById("peerName").value;
-    const params = {
-        peerName,
-        produce: true,
-        consume: true,
-        // share: true,  true if one wants to join call with screen share on by default
-        // produceAudio: false,  both should be set false to join the call without audio or video
-        // produceVideo: false,
-        audioDeviceId: selectedAudioDeviceId,
-        videoDeviceId: selectedVideoDeviceId,
-        ...inputParams,
-      };
-    console.log("input params before calling joinroom",params);
-
-    await vidScaleClient.joinRoom(params);
-    console.log("Join the room");
-    document.getElementById("leaveButton").disabled = false;
-    document.getElementById("closeButton").disabled = false;
-    // document.getElementById("recordingStartButton").disabled = false;
-    // document.getElementById("recordingStopButton").disabled = false;
-    document.getElementById("joinButton").disabled = true;
-    removeAllPeers(); //removes the peerList div upon leaving the room
-    // showThankYouMessage();
-  }
-});
+// joinButton removed — joining handled automatically inside initSuccess
 document.getElementById("leaveButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.leaveRoom();
-    console.log("Left the room");
+    resetControls();
+    const screenShareList = document.getElementById("screenShareList");
+    screenShareList.innerHTML = "";
+    screenShares.clear();
+
+
+    // UI Page Toggle back to lobby
+    document.getElementById("call-page").classList.add("hidden");
+    document.getElementById("call-page").classList.remove("flex");
+    document.getElementById("lobby-page").classList.remove("hidden");
+
     document.getElementById("leaveButton").disabled = true;
-    // document.getElementById("recordingStartButton").disabled = true;
-    // document.getElementById("recordingStopButton").disabled = true;
+    document.getElementById("closeButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch {}
-    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+    try { stopTxRecorder(); } catch { } tu
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
 document.getElementById("closeButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.closeRoom();
-    console.log("Closed the room");
+    resetControls();
+
+    // UI Page Toggle back to lobby
+    document.getElementById("call-page").classList.add("hidden");
+    document.getElementById("call-page").classList.remove("flex");
+    document.getElementById("lobby-page").classList.remove("hidden");
+
     document.getElementById("leaveButton").disabled = true;
+    document.getElementById("closeButton").disabled = true;
+    document.getElementById("closeButton").classList.add("hidden");
     // document.getElementById("recordingStartButton").disabled = true;
     // document.getElementById("recordingStopButton").disabled = true;
     document.getElementById("joinButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch {}
-    try { txSourceNodes.clear(); txGainNodes.clear(); } catch {}
+    try { stopTxRecorder(); } catch { }
+    try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
 
@@ -515,7 +587,7 @@ document.getElementById("closeButton").addEventListener("click", async () => {
 //   }
 // });
 
-function showModAuth({requesterName,requesterPeerId,text}){
+function showModAuth({ requesterName, requesterPeerId, text }) {
   const div = document.getElementById("additional");
   var span = document.createElement("span");
   span.innerHTML = text;
@@ -593,13 +665,39 @@ function removeSSVideo(peerId, videoTrack, type) {
   screenShares.delete(peerId);
 }
 
+function resetControls() {
+  // Mic
+  const micBtn = document.getElementById("mute-button");
+  if (micBtn) {
+    micBtn.querySelector("span").textContent = "mic";
+    micBtn.classList.remove("bg-meetRed", "hover:bg-red-600");
+    micBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+
+  // Camera
+  const camBtn = document.getElementById("cam-toggle-button");
+  if (camBtn) {
+    camBtn.querySelector("span").textContent = "videocam";
+    camBtn.classList.remove("bg-meetRed", "hover:bg-red-600");
+    camBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+
+  // Screen Share
+  const shareBtn = document.getElementById("share-screen-button");
+  if (shareBtn) {
+    shareBtn.querySelector("span").textContent = "present_to_all";
+    shareBtn.classList.remove("bg-meetBlue", "hover:bg-blue-400", "text-gray-900");
+    shareBtn.classList.add("bg-gray-700", "hover:bg-gray-600");
+  }
+}
 function addPeer(peerId, peerName, type) {
   if (!peers.has(peerId)) {
     const peerCard = document.createElement("div");
-    peerCard.className = "peer-card";
+    peerCard.className = "peer-card group relative";
     peerCard.id = `peer-${peerId}`;
 
     const peerNameElement = document.createElement("div");
+    peerNameElement.className = "peer-name-badge";
     peerNameElement.textContent = peerName;
 
     const peerVideo = document.createElement("video");
@@ -608,97 +706,108 @@ function addPeer(peerId, peerName, type) {
 
     const peerAudio = document.createElement("audio");
     peerAudio.autoplay = true;
-    // peerAudio.playsInline = true;
 
-    const muteStatusMessage =
-      type === "remote" ? document.createElement("div") : null;
-    if (muteStatusMessage) {
-      muteStatusMessage.className = "mute-status";
-      muteStatusMessage.style.display = "none";
-    }
+    const muteStatusMessage = document.createElement("div");
+    muteStatusMessage.className = "mute-indicator hidden"; // Initially hide
+    muteStatusMessage.innerHTML = `<span class="material-symbols-outlined">mic_off</span>`;
 
-    const camStatusMessage =
-      type === "remote" ? document.createElement("div") : null;
-    if (camStatusMessage) {
-      camStatusMessage.className = "cam-status";
-      camStatusMessage.style.display = "none";
-    }
+    const camStatusMessage = document.createElement("div");
+    camStatusMessage.className = "absolute inset-0 flex items-center justify-center bg-dark/80 rounded-[0.75rem] z-20 hidden";
+    camStatusMessage.innerHTML = `
+        <div class="flex flex-col items-center gap-3">
+            <div class="w-16 h-16 bg-meetGray rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-[40px] text-gray-400">videocam_off</span>
+            </div>
+            <p class="text-sm font-medium text-gray-400">${peerName}'s camera is off</p>
+        </div>
+    `;
 
-    peerCard.appendChild(peerNameElement);
     peerCard.appendChild(peerVideo);
+    peerCard.appendChild(camStatusMessage);
     peerCard.appendChild(peerAudio);
+    peerCard.appendChild(peerNameElement);
     if (muteStatusMessage) peerCard.appendChild(muteStatusMessage);
-    if (camStatusMessage) peerCard.appendChild(camStatusMessage);
-
-    const peerMedia = document.createElement("div");
-    peerMedia.className = "peer-media";
 
     if (type === "local") {
-      const peerMuteButton = document.createElement("button");
-      // peerMuteButton.textContent = "Turn on mic";
-      peerMuteButton.textContent = "mute mic";
-      peerMuteButton.id = "mute-button";
+      const localControls = document.getElementById('local-controls-container');
 
-      const camToggleButton = document.createElement("button");
-      // camToggleButton.textContent = "Switch Camera On";
-      camToggleButton.textContent = "camera off";
-      camToggleButton.id = "cam-toggle-button";
+      // Ensure we only append these once or cleanly recreate them
+      let peerMuteButton = document.getElementById('mute-button');
+      if (!peerMuteButton) {
+        peerMuteButton = document.createElement("button");
+        peerMuteButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        peerMuteButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">mic</span>`;
+        peerMuteButton.id = "mute-button";
+        peerMuteButton.title = "Toggle Microphone";
+        // Insert before leave button
+        localControls.insertBefore(peerMuteButton, document.getElementById('leaveButton'));
 
-      const shareScreenButton = document.createElement("button");
-      shareScreenButton.textContent = "share screen";
-      shareScreenButton.id = "share-screen-button";
 
-      peerMedia.appendChild(peerMuteButton);
-      peerMedia.appendChild(camToggleButton);
-      peerMedia.appendChild(shareScreenButton);
-      peerCard.appendChild(peerMedia);
+        const camToggleButton = document.createElement("button");
+        camToggleButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        camToggleButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">videocam</span>`;
+        camToggleButton.id = "cam-toggle-button";
+        camToggleButton.title = "Toggle Camera";
+        localControls.insertBefore(camToggleButton, document.getElementById('leaveButton'));
 
-      peerMuteButton.addEventListener("click", async () => {
-        if (peerMuteButton.textContent === "unmute mic") {
-          await vidScaleClient.unmuteMic();
-          peerMuteButton.textContent = "mute";
-        } else {
-          await vidScaleClient.muteMic();
-          peerMuteButton.textContent = "unmute mic";
-        }
-        // if (peerMuteButton.textContent === "Mute") {
-        //   await vidScaleClient.enableMic();
-        //   peerMuteButton.textContent = "Turn on MIc";
-        // } else {
-        //   await vidScaleClient.disableMic();
-        //   peerMuteButton.textContent = "Disable Mic";
-        // }
-      });
+        const shareScreenButton = document.createElement("button");
+        shareScreenButton.className = "bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors";
+        shareScreenButton.innerHTML = `<span class="material-symbols-outlined text-[24px]">present_to_all</span>`;
+        shareScreenButton.id = "share-screen-button";
+        shareScreenButton.title = "Present Screen";
+        localControls.insertBefore(shareScreenButton, document.getElementById('leaveButton'));
 
-      shareScreenButton.addEventListener("click", async () => {
-        console.log("share screen button clicked");
-        if (shareScreenButton.textContent === "share screen") {
-          await vidScaleClient.enableShare();
-          shareScreenButton.textContent = "stop screen share";
-        } else {
-          console.log("Disable screen share clicked");
-          await vidScaleClient.disableShare();
-          shareScreenButton.textContent = "share screen";
-        }
-      });
+        // Event Listeners
+        peerMuteButton.addEventListener("click", async () => {
+          const icon = peerMuteButton.querySelector('span');
+          if (icon.textContent === "mic_off") {
+            await vidScaleClient.unmuteMic();
+            icon.textContent = "mic";
+            peerMuteButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
+            peerMuteButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+          } else {
+            await vidScaleClient.muteMic();
+            icon.textContent = "mic_off";
+            peerMuteButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            peerMuteButton.classList.add('bg-meetRed', 'hover:bg-red-600');
+          }
+        });
 
-      camToggleButton.addEventListener("click", async () => {
-        if (camToggleButton.textContent === "camera off") {
-          await vidScaleClient.disableCam();
-          camToggleButton.textContent = "camera On";
-        } else {
-          await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
-          camToggleButton.textContent = "camera off";
-        }
-        // if (camToggleButton.textContent === "Switch Camera Off") {
-        //   await vidScaleClient.disableCam();
-        //   camToggleButton.textContent = "Switch Camera On";
-        // } else {
-        //   await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
-        //   camToggleButton.textContent = "Switch Camera Off";
-        // }
-      });
+        shareScreenButton.addEventListener("click", async () => {
+          const icon = shareScreenButton.querySelector('span');
+          if (icon.textContent === "present_to_all") {
+            await vidScaleClient.enableShare();
+            icon.textContent = "cancel_presentation";
+            shareScreenButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            shareScreenButton.classList.add('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
+          } else {
+            await vidScaleClient.disableShare();
+            icon.textContent = "present_to_all";
+            shareScreenButton.classList.remove('bg-meetBlue', 'hover:bg-blue-400', 'text-gray-900');
+            shareScreenButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+          }
+        });
+
+        camToggleButton.addEventListener("click", async () => {
+          const icon = camToggleButton.querySelector('span');
+          const peer = peers.get(peerId);
+          if (icon.textContent === "videocam_off") {
+            await vidScaleClient.enableCam({ deviceId: selectedVideoDeviceId });
+            icon.textContent = "videocam";
+            camToggleButton.classList.remove('bg-meetRed', 'hover:bg-red-600');
+            camToggleButton.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.add('hidden');
+          } else {
+            await vidScaleClient.disableCam();
+            icon.textContent = "videocam_off";
+            camToggleButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            camToggleButton.classList.add('bg-meetRed', 'hover:bg-red-600');
+            if (peer && peer.camStatusMessage) peer.camStatusMessage.classList.remove('hidden');
+          }
+        });
+      }
     }
+
 
     document.getElementById("peerList").appendChild(peerCard);
     peers.set(peerId, {
@@ -805,7 +914,7 @@ function renderCaptions() {
     });
     // Auto scroll to bottom
     feed.scrollTop = feed.scrollHeight;
-  } catch {}
+  } catch { }
 }
 
 function upsertCaption(peerId, text, isFinal) {
@@ -842,5 +951,30 @@ function clearCaptions() {
     if (feed) feed.innerHTML = "";
     const container = document.getElementById("captionsContainer");
     if (container) container.style.display = "none";
-  } catch {}
+  } catch { }
 }
+//settings Toggle
+const settingsBtn = document.getElementById("settingsButton");
+const settingsPanel = document.getElementById("settingsDropdown");
+const settingsCloseBtn = document.getElementById("closeSettingsBtn");
+
+if (settingsBtn && settingsPanel) {
+  settingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    settingsPanel.classList.toggle("hidden");
+  });
+  if (settingsCloseBtn) {
+    settingsCloseBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevents outside click conflict
+      settingsPanel.classList.add("hidden");
+    });
+  }
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+      settingsPanel.classList.add("hidden");
+    }
+  });
+}
+
