@@ -14,7 +14,6 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -51,6 +50,8 @@
             background-color: #202124;
             color: white;
         }
+
+        
 
         /* Video grid dynamically injected styles */
         .peer-card {
@@ -108,6 +109,9 @@
             background: #000;
             border-radius: 0.75rem;
         }
+        #screenShareList:empty {
+    display: none;
+        }
     </style>
 
     <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
@@ -116,13 +120,13 @@
 
 <body>
 
-    <!-- PAGE 1: SETUP LOBBY -->
+
     <div id="lobby-page" class="flex flex-col items-center justify-center min-h-screen p-4 w-full">
         <div class="max-w-md w-full bg-meetGray rounded-2xl p-8 shadow-2xl border border-gray-700">
             <h1 class="text-3xl font-semibold mb-6 text-center tracking-tight">Ready to join?</h1>
 
             <form class="space-y-6">
-                <!-- Inputs -->
+
                 <div class="space-y-4">
                     <div>
                         <input id="roomId" placeholder="Enter room ID" required autocomplete="off"
@@ -135,7 +139,7 @@
                 </div>
 
 
-                <!-- Role Toggle -->
+
                 <div id="moderatorToggleRow" class="flex items-center gap-3 pt-3 pb-1 border-t border-gray-600"
                     onclick="toggleModeratorRole()" style="cursor:pointer;user-select:none;">
                     <div id="toggleTrack"
@@ -147,11 +151,11 @@
                     <input type="checkbox" id="moderatorCheckbox" style="display:none;">
                     <div>
                         <p id="toggleLabel" class="text-sm font-medium" style="color:#d1d5db;">Join as Participant</p>
-                        <p class="text-xs text-gray-500">Toggle to join as Moderator (can close room)</p>
+                        <p class="text-xs text-gray-500">Toggle to join as Moderator </p>
                     </div>
                 </div>
 
-                <!-- Actions -->
+
                 <div class="flex flex-col gap-3 pt-3">
                     <button id="initButton" type="button"
                         class="w-full bg-meetBlue hover:bg-blue-400 text-gray-900 font-semibold py-3 rounded-full transition-colors flex items-center justify-center gap-2">
@@ -186,7 +190,7 @@
 
 
     <!-- PAGE 2: IN-CALL STAGE (Hidden initially) -->
-    <div id="call-page" class="hidden flex-col h-screen w-full">
+    <div id="call-page" class="hidden flex-col h-screen w-full relative">
 
         <!-- Notifications / Additional Info -->
         <div id="additional" class="absolute top-4 left-4 z-50 text-sm bg-blue-900/80 px-4 py-2 rounded-md hidden">
@@ -201,10 +205,20 @@
                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[minmax(250px,350px)]">
                 <!-- Peers will be injected here via script.js -->
             </div>
+            <div id="settingsDropdown"
+                class="hidden absolute top-4 right-4 z-50 w-[90%] max-w-sm bg-meetGray border border-gray-600 rounded-xl p-4 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
 
-            <div id="settingsDropdown" class="mt-6 w-full max-w-md bg-meetGray border border-gray-600 rounded-xl p-4">
-                <div class="flex justify-between mb-4  ">
-                    <h3 class="text-sm font-semibold text-white">Device Settings</h3>
+                    <h3 class="text-sm font-semibold text-white">
+                        Device Settings
+                    </h3>
+
+                    <!-- Close Settings Button -->
+                    <button id="closeSettingsBtn"
+                        class="text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                        title="Close settings">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
 
                 </div>
                 <div class=" flex  flex-col gap-4 ">
@@ -243,7 +257,7 @@
                 <div id="captionsFeed" class="max-h-32 overflow-y-auto text-sm leading-relaxed space-y-1"></div>
             </div>
         </div>
-        <!-- Bottom Google Meet Control Bar -->
+
         <div
             class="h-20 bg-dark w-full flex items-center justify-between px-6 border-t border-gray-700 fixed bottom-0 z-50">
             <div class="text-white font-medium truncate w-1/4 hidden md:block" id="call-room-id-display">
@@ -251,24 +265,34 @@
             </div>
             <!-- Central Controls (Dynamically injected local peer buttons will attach styles here logically, or via script update. For now we just style the Leave/Close buttons) -->
             <div class="flex items-center justify-center gap-4 flex-1" id="local-controls-container">
-                <!-- Script.js will append mic/cam/share here for the local user -->
+
+
+
+                <!-- Leave Button -->
                 <button id="leaveButton" disabled
                     class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-50 group"
                     title="Leave call">
                     <span class="material-symbols-outlined text-[24px]">call_end</span>
                 </button>
+                <!-- Settings Button -->
+                <button id="settingsButton"
+                    class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                    title="Settings">
+                    <span class="material-symbols-outlined text-[24px]">settings</span>
+                </button>
+
+                <!-- Close Button (Moderator only) -->
+
+
+            </div>
+
+            <div class="w-1/4 pr-4 flex justify-end items-center">
+
                 <button id="closeButton" disabled
-                    class="hidden bg-meetRed hover:bg-red-600 text-white rounded-[24px] px-6 h-12 flex items-center justify-end font-medium transition-colors disabled:opacity-50 shadow-md"
+                    class="hidden bg-meetRed hover:bg-red-600 text-white rounded-full px-6 h-12 flex items-center justify-center font-medium transition-colors disabled:opacity-50 shadow-md"
                     title="Close Room (Host)">
                     Close
                 </button>
-            </div>
-
-            <div class="w-1/4   pr-2 relative">
-                <!-- Settings Gear Button -->
-
-
-                <!-- Settings Panel (inline below video, hidden by default) -->
 
             </div>
 

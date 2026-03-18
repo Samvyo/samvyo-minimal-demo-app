@@ -285,7 +285,7 @@ document
           console.log("Auto-joining with params:", joinParams);
           try {
             await vidScaleClient.joinRoom(joinParams);
-            console.log("Joined the room!");
+             
             removeAllPeers(); // Clear any stale peer tiles from a previous session
             document.getElementById("lobby-page").classList.add("hidden");
             document.getElementById("call-page").classList.remove("hidden");
@@ -469,7 +469,10 @@ document
 document.getElementById("leaveButton").addEventListener("click", async () => {
   if (vidScaleClient) {
     await vidScaleClient.leaveRoom();
-    console.log("Left the room");
+     const screenShareList = document.getElementById("screenShareList");
+    screenShareList.innerHTML = "";
+    screenShares.clear();
+    
     
     // UI Page Toggle back to lobby
     document.getElementById("call-page").classList.add("hidden");
@@ -882,3 +885,21 @@ function clearCaptions() {
     if (container) container.style.display = "none";
   } catch {}
 }
+// ===== Settings Toggle =====
+const settingsBtn = document.getElementById("settingsButton");
+const settingsPanel = document.getElementById("settingsDropdown");
+
+if (settingsBtn && settingsPanel) {
+  settingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    settingsPanel.classList.toggle("hidden");
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+      settingsPanel.classList.add("hidden");
+    }
+  });
+}
+
