@@ -922,12 +922,19 @@ function clearCaptions() {
 //settings Toggle
 const settingsBtn = document.getElementById("settingsButton");
 const settingsPanel = document.getElementById("settingsDropdown");
+const settingsCloseBtn = document.getElementById("closeSettingsBtn");
 
 if (settingsBtn && settingsPanel) {
   settingsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     settingsPanel.classList.toggle("hidden");
   });
+   if (settingsCloseBtn) {
+    settingsCloseBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevents outside click conflict
+      settingsPanel.classList.add("hidden");
+    });
+  }
 
   // Close when clicking outside
   document.addEventListener("click", (e) => {
