@@ -1,4 +1,4 @@
-# vidscale-minimal-demo-app
+# samvyo-minimal-demo-app
 
 
 
