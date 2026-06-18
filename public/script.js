@@ -615,54 +615,85 @@ function showAuthNotification({ requesterName, requesterPeerId, text }) {
   div.appendChild(span);
 }
 
+function featureScreenShare(peerId) {
+  const list = document.getElementById("screenShareList");
+  const peerList = document.getElementById("peerList");
+  const ssCard = document.getElementById(`ss-${peerId}`);
+  if (!ssCard || ssCard.parentElement === list) return;
+  // Demote current featured ss to sidebar
+  list.querySelectorAll(".ss-card").forEach(c => peerList.prepend(c));
+  // Feature the selected one
+  list.appendChild(ssCard);
+}
+
 function addSSVideo(peerId, videoTrack, type) {
-  if (typeof screenShares === "undefined") {
-    console.error("screenShares is not defined.");
+  if (screenShares.has(peerId)) {
+    console.warn(`Screen share already exists for peer ${peerId}`);
+    return;
+  }
+  if (!videoTrack) {
+    console.error(`Invalid video track for peer ${peerId}`);
     return;
   }
 
-  if (!screenShares.has(peerId)) {
-    const ssCard = document.createElement("div");
-    ssCard.className = "ss-card";
-    ssCard.id = `ss-${peerId}`;
+  const ssCard = document.createElement("div");
+  ssCard.className = "ss-card";
+  ssCard.id = `ss-${peerId}`;
 
-    const ssVideo = document.createElement("video");
+  const ssVideo = document.createElement("video");
+  ssVideo.autoplay = true;
+  ssVideo.playsInline = true;
+  ssVideo.srcObject = new MediaStream([videoTrack]);
+  ssVideo.play().catch(e => console.warn(`Error playing ss video for ${peerId}:`, e));
+  ssCard.appendChild(ssVideo);
 
-    if (videoTrack) {
-      const videoStream = new MediaStream();
-      videoStream.addTrack(videoTrack);
-      ssVideo.srcObject = videoStream;
+  // Name label
+  const nameLabel = document.createElement("div");
+  nameLabel.className = "peer-name-badge";
+  const peerName = type === "local"
+    ? "Your screen"
+    : `${peers.get(peerId)?.peerName || "Unknown"}'s screen`;
+  nameLabel.textContent = peerName;
+  ssCard.appendChild(nameLabel);
 
-      ssVideo
-        .play()
-        .catch((error) =>
-          console.warn(
-            `Error playing screen share video for peer ${peerId}:`,
-            error
-          )
-        );
+  // Clicking a sidebar ss-card features it
+  ssCard.addEventListener("click", () => featureScreenShare(peerId));
 
-      ssVideo.autoplay = true;
-      ssVideo.playsInline = true;
+  screenShares.set(peerId, ssCard);
 
-      ssCard.appendChild(ssVideo);
+  const list = document.getElementById("screenShareList");
+  const peerList = document.getElementById("peerList");
 
-      document.getElementById("screenShareList").appendChild(ssCard);
-      screenShares.set(peerId, ssCard); // Store the card in screenShares map
-    } else {
-      console.error(`Invalid video track for peer ${peerId}`);
-    }
-  } else {
-    console.warn(`Screen share already exists for peer ${peerId}`);
-  }
+  // Demote any currently featured screen share to sidebar
+  list.querySelectorAll(".ss-card").forEach(c => peerList.prepend(c));
+
+  // Feature this new (most recent) screen share
+  list.appendChild(ssCard);
+  document.getElementById("video-layout-container").classList.add("screen-share-mode");
 }
 
 function removeSSVideo(peerId, videoTrack, type) {
   const ssCard = document.getElementById(`ss-${peerId}`);
+  const list = document.getElementById("screenShareList");
+  const peerList = document.getElementById("peerList");
+
   if (ssCard) {
+    const wasFeatured = ssCard.parentElement === list;
     ssCard.remove();
+    screenShares.delete(peerId);
+
+    if (wasFeatured) {
+      // Promote the most recent sidebar ss-card to featured
+      const next = peerList.querySelector(".ss-card");
+      if (next) list.appendChild(next);
+    }
+  } else {
+    screenShares.delete(peerId);
   }
-  screenShares.delete(peerId);
+
+  if (screenShares.size === 0) {
+    document.getElementById("video-layout-container").classList.remove("screen-share-mode");
+  }
 }
 
 function resetControls() {
