@@ -1,93 +1,197 @@
 # samvyo-minimal-demo-app
 
+A minimal browser-based video conferencing demo built on the [Samvyo JS SDK](https://www.npmjs.com/package/samvyo-js). It shows how to integrate real-time audio/video, screen sharing, live captions, and moderator controls into a web app in a single HTML + JS file.
 
+---
 
-## Getting started
+## Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Lobby** — enter a Room ID and display name, then join as a Participant or Moderator
+- **Audio / Video** — real-time WebRTC streams with mute, unmute, and camera on/off controls
+- **Screen sharing** — share your screen with an auto-featured main view and a participant sidebar for multiple simultaneous shares
+- **Live captions** — real-time speech-to-text transcription overlay powered by Deepgram
+- **Device settings** — switch microphone and camera mid-call from a settings panel
+- **Moderator controls** — close the room for all participants, allow or deny join requests when authentication is enabled
+- **Dynamic peer grid** — responsive tile layout that adapts as participants join and leave
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+---
 
-## Add your files
+## Tech stack
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+| Layer | Technology |
+|---|---|
+| Backend | Node.js, Express (HTTPS) |
+| Frontend | Vanilla HTML / JS, Tailwind CSS (CDN) |
+| SDK | `samvyo-js-sdk` (loaded from unpkg) |
+| Styling icons | Google Material Symbols |
+
+---
+
+## Prerequisites
+
+- Node.js 18+
+- A Samvyo account with an **Access Key** and **Secret Access Key**
+- TLS certificate files (`server.key` and `server.crt`) — required because WebRTC needs a secure origin
+
+---
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment variables
+
+Copy the example file and fill in your Samvyo credentials:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+ACCESS_KEY=<your-access-key>
+SECRET_ACCESS_KEY=<your-secret-access-key>
+```
+
+### 3. Add TLS certificates
+
+Place your certificate files in the project root:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/dev_team7965314/vidscale-minimal-demo-app.git
-git branch -M main
-git push -uf origin main
+server.key
+server.crt
 ```
 
-## Integrate with your tools
+For local development you can generate a self-signed certificate:
 
-- [ ] [Set up project integrations](https://gitlab.com/dev_team7965314/vidscale-minimal-demo-app/-/settings/integrations)
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes
+```
 
-## Collaborate with your team
+### 4. Start the server
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```bash
+npm run start
+```
 
-## Test and Deploy
+The server starts on `https://localhost:3600` (or the port set in `PORT` env var).
 
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+---
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+1. Open `https://localhost:3600` in a browser.
+2. Enter a **Room ID** and your **display name**.
+3. Optionally toggle **Join as Moderator** to get room-close and authentication controls.
+4. Click **Join Room** — the app fetches a session token from the backend and connects via the Samvyo SDK.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+In-call controls (bottom bar):
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+| Button | Action |
+|---|---|
+| Mic | Mute / unmute microphone |
+| Camera | Turn camera on / off |
+| Present | Start / stop screen share |
+| Leave | Leave the call |
+| Settings | Switch audio/video input device |
+| Close | Close the room for everyone (Moderator only) |
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+---
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Advanced URL parameters
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+You can tune media settings by appending query parameters to the URL:
 
-## License
-For open source projects, say how it is licensed.
+| Parameter | Default | Description |
+|---|---|---|
+| `videoResolution` | `hd` | Webcam resolution (`hd`, `sd`, etc.) |
+| `produce` | `true` | Enable sending audio+video |
+| `produceAudio` | `true` | Enable sending audio |
+| `produceVideo` | `true` | Enable sending video |
+| `forceH264` | `false` | Force H.264 video codec |
+| `forcePCMU` | `false` | Force PCMU audio codec |
+| `h264Profile` | `high` | H.264 profile (`high` or `low`) |
+| `forceFPS` | `30` | Target frame rate (1–60) |
+| `enableWebcamLayers` | `true` | Enable simulcast layers for webcam |
+| `numSimulcastStreams` | `3` | Number of simulcast streams (1–3) |
+| `videoBitRateHigh` | `500` | High-quality bitrate kbps (50–1000) |
+| `videoBitRateMedium` | `250` | Mid-quality bitrate kbps (30–300) |
+| `videoBitRateLow` | `100` | Low-quality bitrate kbps (10–125) |
+| `autoGainControl` | `true` | Browser automatic gain control |
+| `echoCancellation` | `true` | Browser echo cancellation |
+| `noiseSuppression` | `true` | Browser noise suppression |
+| `sampleRate` | `44000` | Audio sample rate Hz (8000–64000) |
+| `channelCount` | `1` | Audio channel count (1–8) |
+| `role` | `participant` | Join role (`moderator` or `participant`) |
+| `auth` | `false` | Require moderator approval to join |
+| `password` | — | Room password (when auth is enabled) |
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Example:
+
+```
+https://localhost:3600?role=moderator&forceH264=true&videoBitRateHigh=800
+```
+
+---
+
+## Docker deployment
+
+Build and push a Docker image using the provided script:
+
+```bash
+./deploy.sh dev    # uses .env.dev
+./deploy.sh prod   # uses .env.prod
+```
+
+The script expects the following variables in your env file:
+
+```
+CI_REGISTRY_USER
+CI_REGISTRY_PASSWORD
+CI_REGISTRY
+VERSION
+SDK_ACCESS_KEY
+SDK_SECRET_ACCESS_KEY
+```
+
+To build manually:
+
+```bash
+docker build \
+  --build-arg SDK_ACCESS_KEY=<key> \
+  --build-arg SDK_SECRET_ACCESS_KEY=<secret> \
+  -t samvyo-demo:latest .
+
+docker run -p 3600:3600 samvyo-demo:latest
+```
+
+---
+
+## Project structure
+
+```
+samvyo-minimal-demo-app/
+├── server.js          # Express HTTPS server — serves static files and the session-token API
+├── public/
+│   ├── index.html     # Single-page UI (lobby + call views)
+│   └── script.js      # Samvyo SDK integration and all call logic
+├── .env.example       # Environment variable template
+├── dockerfile         # Docker build definition
+├── deploy.sh          # Manual build-and-push script
+└── package.json
+```
+
+---
+
+## API endpoint
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/create-session-token` | Exchanges `roomId` + SDK credentials for a Samvyo session token |
+
+The frontend calls this endpoint before initialising the SDK so that credentials never leave the server.
