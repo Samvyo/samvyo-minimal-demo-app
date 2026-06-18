@@ -115,6 +115,80 @@
             background: #000;
             border-radius: 0.75rem;
         }
+
+        #video-layout-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        #video-layout-container.screen-share-mode {
+            flex-direction: row;
+            align-items: stretch;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        #video-layout-container.screen-share-mode #screenShareList {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #video-layout-container.screen-share-mode #screenShareList .ss-card {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ss-card in sidebar: clickable to feature */
+        #video-layout-container.screen-share-mode #peerList .ss-card {
+            min-height: 130px;
+            height: 130px;
+            flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        #video-layout-container.screen-share-mode #peerList .ss-card::after {
+            content: 'Click to feature';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: 0.75rem;
+        }
+
+        #video-layout-container.screen-share-mode #peerList .ss-card:hover::after {
+            opacity: 1;
+        }
+
+        #video-layout-container.screen-share-mode #peerList {
+            width: 180px;
+            flex-shrink: 0;
+            display: flex !important;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            grid-template-columns: 1fr !important;
+            grid-auto-rows: unset !important;
+        }
+
+        #video-layout-container.screen-share-mode #peerList .peer-card {
+            min-height: 130px;
+            height: 130px;
+            flex-shrink: 0;
+        }
     </style>
 
     <script src="https://unpkg.com/samvyo-js-sdk@latest/dest/samvyo-js-sdk.js"></script>
@@ -204,11 +278,13 @@
         </div>
 
         <!-- Main Video Grid Area -->
-        <div class="flex-1 p-4 lg:p-6 pb-24 overflow-y-auto">
-            <div id="screenShareList" class="flex flex-col gap-4 mb-4"></div>
-            <div id="peerList"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[minmax(250px,350px)]">
-                <!-- Peers will be injected here via script.js -->
+        <div class="flex-1 p-4 lg:p-6 pb-24 overflow-hidden flex flex-col">
+            <div id="video-layout-container" class="flex-1 min-h-0">
+                <div id="screenShareList" class="flex flex-col gap-4 mb-4"></div>
+                <div id="peerList"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[minmax(250px,350px)]">
+                    <!-- Peers will be injected here via script.js -->
+                </div>
             </div>
             <div id="settingsDropdown"
                 class="hidden absolute top-4 right-4 z-50 w-[90%] max-w-sm bg-meetGray border border-gray-600 rounded-xl p-4 shadow-xl">
