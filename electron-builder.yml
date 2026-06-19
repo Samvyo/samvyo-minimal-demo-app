@@ -15,175 +15,96 @@
 #   npm run dist:all     → build all three  (best done in CI/GitHub Actions)
 #
 # NO CODE SIGNING configured here intentionally.
-# Users will see an OS warning on first launch — that is acceptable for
-# internal demo/testing use. See the implementation plan Phase 5 for
-# signing setup when ready.
+# Users will see an OS warning on first launch — acceptable for internal demos.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── App Identity ──────────────────────────────────────────────────────────────
 
-# appId: Unique reverse-domain identifier for this app.
-# Used by the OS to identify the app for notifications, deep links, etc.
-# Must be unique — do not reuse another app's ID.
 appId: com.samvyo.desktop
-
-# productName: The human-readable name shown to users.
-# Appears in: installer window title, Start Menu, Applications folder, taskbar.
 productName: Samvyo
-
-# copyright: Shown in the installer and About dialog.
 copyright: Copyright © 2026 Samvyo Technologies
 
-# ── Output Directory ──────────────────────────────────────────────────────────
+# ── Output & Build Resources ──────────────────────────────────────────────────
 
 directories:
-  # output: where electron-builder writes the finished installers.
-  # After running dist:linux you'll find Samvyo.AppImage in ./release/
   output: release
-
-  # buildResources: folder where electron-builder looks for icon files
-  # and other build assets (e.g. NSIS installer background image).
   buildResources: assets
 
+# ── asar: false ───────────────────────────────────────────────────────────────
+# By default electron-builder packs source files into an .asar archive.
+# We MUST disable this because:
+#   child_process.fork() cannot run a file from inside an .asar archive.
+#   server.js is forked as a child process by electron/main.js — it needs
+#   to exist as a real file on disk, not inside a virtual archive.
+# With asar: false, all files are extracted to disk on install — fork() works.
+asar: false
+
 # ── Files to Include in the Package ──────────────────────────────────────────
-# electron-builder bundles ONLY the files listed here into the installer.
-# Everything else (node_modules source, .git, test files) is excluded.
-#
-# The packaged app structure inside the installer will be:
-#   resources/app/
-#     ├── electron/         ← Electron main, preload, menu
-#     ├── public/           ← index.html, script.js (the web UI)
-#     ├── server.js         ← Express HTTPS server
-#     ├── server.key        ← TLS private key
-#     ├── server.crt        ← TLS certificate
-#     ├── .env              ← API credentials (ACCESS_KEY, SECRET_ACCESS_KEY)
-#     └── package.json      ← needed by Node.js require() resolution
+# electron-builder bundles ONLY the files listed here.
+# node_modules (production only) are added automatically by electron-builder.
 
 files:
-  # Electron process files
+  # Electron process files (main, preload, menu)
   - electron/**/*
 
-  # The web UI served by Express
+  # Web UI served by Express (index.html, script.js)
   - public/**/*
 
-  # Express HTTPS server entry point
+  # Express HTTPS server — forked as a child process at runtime
   - server.js
 
   # TLS certificate files — required by server.js to start HTTPS
-  # WARNING: these are self-signed certs. For production, replace with
-  # proper certs or move to HTTP-only for desktop (Electron = secure context)
   - server.key
   - server.crt
 
-# ── asar unpacking ────────────────────────────────────────────────────────────
-# electron-builder packs all files into an .asar archive by default.
-# child_process.fork() CANNOT run a file from inside an asar archive —
-# Node.js needs a real file on disk to spawn a new process.
-#
-# asarUnpack lists the files that must be extracted from the asar onto disk:
-#   server.js  → forked as a child process by electron/main.js
-#   server.key → read by server.js with fs.readFileSync at startup
-#   server.crt → read by server.js with fs.readFileSync at startup
-#   .env       → read by dotenv.config() inside server.js
-#   public/    → served as static files by Express from disk
-#   node_modules/ → required by server.js (express, axios, dotenv, etc.)
-asarUnpack:
-  - server.js
-  - server.key
-  - server.crt
-  - .env
-  - public/**/*
-  - node_modules/**/*
-
-  # Environment variables — API keys for the Samvyo SDK
+  # API credentials — ACCESS_KEY and SECRET_ACCESS_KEY for Samvyo SDK
   # WARNING: bundling .env means credentials are inside the installer.
-  # For a production release: use OS keychain or prompt user for keys instead.
+  # For production: use OS keychain or prompt user for keys instead.
   - .env
 
-  # package.json is required so Node.js can resolve module paths at runtime
+  # package.json — required for Node.js module resolution at runtime
   - package.json
 
-  # Icon assets bundled into the app package
+  # App icons — used by the OS taskbar, dock, and app launcher
   - assets/**/*
-
-# node_modules are handled separately by electron-builder (it re-installs
-# only production dependencies into the package, excluding devDependencies)
 
 # ── Windows Configuration ─────────────────────────────────────────────────────
 win:
-  # Icon for Windows: .ico generated by electron-icon-builder from assets/icon.png
-  # Path: assets/icons/win/icon.ico  (multi-size: 16/32/48/256 px packed in one file)
   icon: assets/icons/win/icon.ico
-
-  # targets: what installer formats to produce
-  # nsis     → a proper Windows installer (.exe) with Add/Remove Programs entry
-  # portable → a single .exe that runs without installation (no admin needed)
   target:
-    - target: nsis
-    - target: portable
+    - target: nsis      # Full installer with Add/Remove Programs entry
+    - target: portable  # Single .exe, no installation needed
 
-# NSIS installer configuration (Windows installer behaviour)
 nsis:
-  # oneClick: false → show the installer wizard (language, path, shortcuts)
-  # true would silently install with defaults — less user control
-  oneClick: false
-
-  # perMachine: false → install for the current user only (no admin/UAC prompt)
-  # true would install system-wide and require administrator privileges
-  perMachine: false
-
-  # allowToChangeInstallationDirectory: true → user can choose install folder
+  oneClick: false                        # Show installer wizard, not silent install
+  perMachine: false                      # Install per-user (no admin/UAC prompt)
   allowToChangeInstallationDirectory: true
-
-  # createDesktopShortcut: true → place a shortcut on the user's desktop
   createDesktopShortcut: true
-
-  # createStartMenuShortcut: true → add Samvyo to the Windows Start Menu
   createStartMenuShortcut: true
 
 # ── macOS Configuration ───────────────────────────────────────────────────────
 mac:
-  # Icon for macOS: .icns generated by electron-icon-builder from assets/icon.png
-  # Path: assets/icons/mac/icon.icns
   icon: assets/icons/mac/icon.icns
-
-  # App category: shown in the Mac App Store (if ever distributed there)
-  # and used by macOS Spotlight for app classification
   category: public.app-category.business
-
-  # targets:
-  # dmg → .dmg disk image (standard macOS distribution format)
-  # zip → .zip of the .app bundle (needed if auto-update is added later)
   target:
-    - target: dmg
-    - target: zip
-
-  # NOTE: hardenedRuntime and notarization are intentionally omitted.
-  # Unsigned macOS builds will show "cannot be opened" by default.
-  # Users can right-click → Open → Open to bypass Gatekeeper.
-  # For production: add Apple Developer ID credentials and set hardenedRuntime: true
+    - target: dmg   # Standard macOS distribution format
+    - target: zip   # Zip of .app bundle (needed for auto-update later)
+  # hardenedRuntime and notarization intentionally omitted — unsigned build.
+  # Users bypass Gatekeeper via: right-click → Open → Open
 
 # ── Linux Configuration ───────────────────────────────────────────────────────
 linux:
-  # Icon for Linux: directory of PNGs at multiple sizes (electron-icon-builder output)
-  # electron-builder reads all sizes from the folder for the .desktop file
   icon: assets/icons/png
-
-  # App category for Linux desktop environments
-  # Used by .desktop file to categorise the app in the system menu
   category: Network;VideoConference
-
-  # targets:
-  # AppImage → single file, runs on ANY Linux distro without installation
-  #            user just chmod +x and double-click — most portable option
-  # deb       → .deb package for Ubuntu/Debian — installs via apt or dpkg
   target:
-    - target: AppImage
-    - target: deb
+    - target: AppImage  # Runs on any Linux distro without installation
+    - target: deb       # Ubuntu/Debian package
 
-# ── publish: disabled (no code signing, no update server) ────────────────────
-# publish: null tells electron-builder not to try to upload artifacts anywhere.
-# When code signing and auto-update are added in Phase 5, this would be:
-#   publish:
-#     provider: github   # or 'generic' for self-hosted
+  # --no-sandbox is required on many Linux systems where the kernel does not
+  # grant Chromium's sandbox the privileges it needs (most Ubuntu setups).
+  # Without this flag, the Electron app launches but the window never appears.
+  executableArgs:
+    - --no-sandbox
+
+# ── publish: disabled ────────────────────────────────────────────────────────
 publish: null
