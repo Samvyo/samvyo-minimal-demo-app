@@ -195,6 +195,18 @@ function startServer() {
   // 'error' fires if fork() itself fails (e.g. server.js file not found)
   serverProcess.on('error', (err) => {
     console.error('[Electron] Failed to start Express server:', err.message);
+
+    // EADDRINUSE — port 3600 is already in use, usually because a previous
+    // Electron instance crashed without cleanly killing the forked server.js
+    // child process, leaving an orphan process holding the port.
+    //
+    // Resolution: the port is already open, which means waitForServer() will
+    // succeed immediately. We clear serverProcess so before-quit won't try to
+    // kill a process we don't own, then let the app continue loading normally.
+    if (err.code === 'EADDRINUSE') {
+      console.log(`[Electron] Port ${SERVER_PORT} already in use — reusing existing server`);
+      serverProcess = null;
+    }
   });
 }
 
@@ -489,18 +501,19 @@ function createWindow() {
       desktopCapturer
         .getSources({ types: ['screen', 'window'] })
         .then((sources) => {
-          // Pick the first screen (the primary monitor — index 0)
-          // sources[0] for type:'screen' is always the primary display
-          //
-          // For a future improvement: show a custom picker dialog so the
-          // user can choose which screen/window to share (Phase 3 of the
-          // implementation plan uses window.samvyoDesktop.pickScreenSource())
-          callback({ video: sources[0] });
+          // On macOS 10.15+, Screen Recording permission must be granted in
+          // System Preferences → Privacy & Security → Screen Recording.
+          // Without it, getSources() resolves with an EMPTY array (no error).
+          // sources[0] would be undefined → { video: undefined } causes a
+          // silent failure in the SDK. Guard against this explicitly.
+          if (sources && sources.length > 0) {
+            callback({ video: sources[0] });
+          } else {
+            callback({});
+          }
         })
         .catch(() => {
-          // If getSources() fails (permissions denied, no screens found),
-          // call callback with empty object to gracefully reject the request
-          // rather than leaving the promise hanging indefinitely
+          // getSources() threw — permissions hard-denied or OS error.
           callback({});
         });
     }
