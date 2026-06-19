@@ -195,6 +195,18 @@ function startServer() {
   // 'error' fires if fork() itself fails (e.g. server.js file not found)
   serverProcess.on('error', (err) => {
     console.error('[Electron] Failed to start Express server:', err.message);
+
+    // EADDRINUSE — port 3600 is already in use, usually because a previous
+    // Electron instance crashed without cleanly killing the forked server.js
+    // child process, leaving an orphan process holding the port.
+    //
+    // Resolution: the port is already open, which means waitForServer() will
+    // succeed immediately. We clear serverProcess so before-quit won't try to
+    // kill a process we don't own, then let the app continue loading normally.
+    if (err.code === 'EADDRINUSE') {
+      console.log(`[Electron] Port ${SERVER_PORT} already in use — reusing existing server`);
+      serverProcess = null;
+    }
   });
 }
 
