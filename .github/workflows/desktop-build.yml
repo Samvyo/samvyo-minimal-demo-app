@@ -151,17 +151,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # PowerShell syntax for writing the .env file on Windows
+      # Write both keys in one shot using Set-Content.
+      # Avoids Out-File + Add-Content which can produce inconsistent line endings
+      # or a BOM depending on the PowerShell version on the runner.
       - name: Create .env file
         run: |
-          "ACCESS_KEY=${{ secrets.ACCESS_KEY }}" | Out-File -FilePath .env -Encoding utf8
-          "SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }}" | Add-Content -Path .env -Encoding utf8
+          Set-Content -Path .env -Encoding utf8 -Value "ACCESS_KEY=${{ secrets.ACCESS_KEY }}`nSECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }}"
 
-      # On Windows, base64 decode is done via PowerShell
+      # On Windows, base64 decode uses WriteAllBytes — works on all PowerShell versions.
+      # Set-Content -Encoding Byte was removed in PowerShell 7 (used by windows-latest runner).
       - name: Restore TLS certificates
         run: |
-          [System.Convert]::FromBase64String("${{ secrets.SERVER_KEY_B64 }}")  | Set-Content -Path server.key -Encoding Byte
-          [System.Convert]::FromBase64String("${{ secrets.SERVER_CERT_B64 }}") | Set-Content -Path server.crt -Encoding Byte
+          [System.IO.File]::WriteAllBytes("server.key", [System.Convert]::FromBase64String("${{ secrets.SERVER_KEY_B64 }}"))
+          [System.IO.File]::WriteAllBytes("server.crt", [System.Convert]::FromBase64String("${{ secrets.SERVER_CERT_B64 }}"))
 
       - name: Build Windows (.exe)
         env:
