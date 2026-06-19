@@ -1,0 +1,232 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .github/workflows/desktop-build.yml  —  Automated Desktop App Builds
+#
+# WHAT THIS DOES:
+#   Every time you push a version tag (e.g. v1.0.23) to GitLab/GitHub,
+#   this pipeline automatically:
+#     1. Builds the Electron app on Linux, Windows, and macOS runners
+#     2. Produces: .AppImage, .deb, .exe (NSIS installer), .dmg
+#     3. Uploads all installers as downloadable artifacts attached to the release
+#
+# HOW TO TRIGGER A BUILD:
+#   git tag v1.0.23
+#   git push origin v1.0.23
+#   → Pipeline starts automatically on all three OS runners in parallel
+#
+# NO CODE SIGNING:
+#   Signing is intentionally skipped (Phase 5 of the implementation plan).
+#   Users will see an OS warning on first launch — acceptable for internal demos.
+#
+# SECRETS REQUIRED (set these in GitHub → Settings → Secrets → Actions):
+#   ACCESS_KEY           → Samvyo API access key (from your .env)
+#   SECRET_ACCESS_KEY    → Samvyo API secret key (from your .env)
+#   SERVER_KEY_B64       → server.key file, base64-encoded
+#   SERVER_CERT_B64      → server.crt file, base64-encoded
+#
+#   How to encode your cert files for the secret:
+#     base64 -w 0 server.key   → copy output → paste as SERVER_KEY_B64
+#     base64 -w 0 server.crt   → copy output → paste as SERVER_CERT_B64
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Desktop Build
+
+# ── Trigger ───────────────────────────────────────────────────────────────────
+# Runs ONLY when a tag matching v*.*.* is pushed (e.g. v1.0.23, v2.0.0)
+# This prevents the pipeline from running on every commit to development/main
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# ── Permissions ───────────────────────────────────────────────────────────────
+# Write permission is needed to create GitHub Releases and upload artifacts
+permissions:
+  contents: write
+
+# ── Jobs ─────────────────────────────────────────────────────────────────────
+# Three jobs run IN PARALLEL on different OS runners simultaneously.
+# Total build time ≈ max(Linux time, Windows time, macOS time) — not the sum.
+jobs:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 1: Linux — produces .AppImage + .deb
+  # ════════════════════════════════════════════════════════════════════════════
+  build-linux:
+    name: Build Linux (.AppImage + .deb)
+
+    # ubuntu-latest is a GitHub-hosted runner with Ubuntu pre-installed.
+    # electron-builder's Linux targets (AppImage, deb) require a Linux runner.
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ── Step 1: Check out the repository code ─────────────────────────────
+      # actions/checkout downloads your repo onto the runner machine.
+      # Without this, the runner has no code to work with.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Set up Node.js ────────────────────────────────────────────
+      # Installs the Node.js version your app requires.
+      # cache: 'npm' caches node_modules between runs → faster subsequent builds.
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── Step 3: Install dependencies ──────────────────────────────────────
+      # npm ci (clean install) is preferred over npm install in CI because:
+      #   • It uses package-lock.json exactly — no version drift
+      #   • It deletes node_modules first for a clean state
+      #   • It is faster and more reproducible
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Step 4: Recreate .env from GitHub Secrets ─────────────────────────
+      # The .env file contains API keys — it must NEVER be committed to git.
+      # We store the key values as GitHub Secrets and write the .env at build time.
+      # ${{ secrets.NAME }} reads the secret value securely from GitHub.
+      - name: Create .env file
+        run: |
+          echo "ACCESS_KEY=${{ secrets.ACCESS_KEY }}" >> .env
+          echo "SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }}" >> .env
+
+      # ── Step 5: Restore TLS certificate files from Secrets ─────────────────
+      # server.key and server.crt are binary-ish files. We stored them as
+      # base64-encoded strings in GitHub Secrets, and decode them back here.
+      # base64 -d (Linux) decodes the string back to the original file.
+      - name: Restore TLS certificates
+        run: |
+          echo "${{ secrets.SERVER_KEY_B64 }}"  | base64 -d > server.key
+          echo "${{ secrets.SERVER_CERT_B64 }}" | base64 -d > server.crt
+
+      # ── Step 6: Build Linux installers ────────────────────────────────────
+      # ELECTRON_RUN_AS_NODE= clears the variable that would make Electron
+      # behave as plain Node.js (set by some CI environments).
+      # GH_TOKEN is passed so electron-builder can upload to GitHub Releases.
+      - name: Build Linux (.AppImage + .deb)
+        env:
+          ELECTRON_RUN_AS_NODE: ''
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:linux
+
+      # ── Step 7: Upload artifacts to the GitHub Release ────────────────────
+      # softprops/action-gh-release creates (or updates) a GitHub Release
+      # for the tag that triggered this workflow, and attaches the built files.
+      # Users can then download directly from the GitHub Releases page.
+      - name: Upload Linux artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Glob patterns for the files to upload
+          files: |
+            release/*.AppImage
+            release/*.deb
+          # draft: false → release is immediately visible (not a draft)
+          draft: false
+          # prerelease: false → shown as a stable release, not a pre-release
+          prerelease: false
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 2: Windows — produces .exe NSIS installer + portable .exe
+  # ════════════════════════════════════════════════════════════════════════════
+  build-windows:
+    name: Build Windows (.exe installer)
+
+    # windows-latest provides a Windows Server runner with MSVC, PowerShell etc.
+    # electron-builder's Windows NSIS target MUST run on a Windows runner.
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # PowerShell syntax for writing the .env file on Windows
+      - name: Create .env file
+        run: |
+          "ACCESS_KEY=${{ secrets.ACCESS_KEY }}" | Out-File -FilePath .env -Encoding utf8
+          "SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }}" | Add-Content -Path .env -Encoding utf8
+
+      # On Windows, base64 decode is done via PowerShell
+      - name: Restore TLS certificates
+        run: |
+          [System.Convert]::FromBase64String("${{ secrets.SERVER_KEY_B64 }}")  | Set-Content -Path server.key -Encoding Byte
+          [System.Convert]::FromBase64String("${{ secrets.SERVER_CERT_B64 }}") | Set-Content -Path server.crt -Encoding Byte
+
+      - name: Build Windows (.exe)
+        env:
+          ELECTRON_RUN_AS_NODE: ''
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:win
+
+      - name: Upload Windows artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.exe
+          draft: false
+          prerelease: false
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 3: macOS — produces .dmg disk image
+  # ════════════════════════════════════════════════════════════════════════════
+  build-mac:
+    name: Build macOS (.dmg)
+
+    # macos-latest provides a macOS runner (Apple Silicon or Intel).
+    # macOS .icns generation and .dmg packaging MUST run on a macOS runner.
+    runs-on: macos-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env file
+        run: |
+          echo "ACCESS_KEY=${{ secrets.ACCESS_KEY }}" >> .env
+          echo "SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }}" >> .env
+
+      # macOS uses -D flag for base64 decode (BSD base64, not GNU base64)
+      - name: Restore TLS certificates
+        run: |
+          echo "${{ secrets.SERVER_KEY_B64 }}"  | base64 -D > server.key
+          echo "${{ secrets.SERVER_CERT_B64 }}" | base64 -D > server.crt
+
+      - name: Build macOS (.dmg)
+        env:
+          ELECTRON_RUN_AS_NODE: ''
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CSC_IDENTITY_AUTO_DISCOVERY: false tells electron-builder NOT to
+          # search for an Apple code signing certificate in the macOS keychain.
+          # Without this, the build fails on unsigned CI environments.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:mac
+
+      - name: Upload macOS artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.dmg
+            release/*.zip
+          draft: false
+          prerelease: false

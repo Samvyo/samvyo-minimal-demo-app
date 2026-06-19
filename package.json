@@ -1,4 +1,21 @@
 {
+  "name": "samvyo-minimal-demo-app",
+  "productName": "Samvyo",
+  "version": "1.0.22",
+  "description": "Samvyo real-time video conferencing — web and desktop demo application",
+  "author": {
+    "name": "Samvyo Technologies",
+    "email": "tech-team-2@samvyo.com"
+  },
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "electron:dev": "ELECTRON_RUN_AS_NODE= electron .",
+    "dist:linux": "electron-builder --linux",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:all": "electron-builder -mwl"
+  },
   "dependencies": {
     "axios": "^1.7.7",
     "cors": "^2.8.5",
@@ -8,5 +25,8 @@
     "nodemon": "^3.1.7",
     "samvyo-js": "^1.1.19"
   },
-  "version": "1.0.22"
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
 }
