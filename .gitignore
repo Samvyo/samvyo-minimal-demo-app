@@ -2,3 +2,4 @@
 .env.prod
 node_modules
 .gitlab-ci.yml
+release/
