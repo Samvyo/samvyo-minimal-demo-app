@@ -122,23 +122,36 @@ let isQuitting = false;
  *   fork() keeps them cleanly separated.
  */
 function startServer() {
+  // ── Resolve the correct server.js path in both dev and packaged builds ────
+  // In development:  __dirname = <project>/electron/
+  //                  server.js  = <project>/server.js  → path.join(__dirname, '..', 'server.js')
+  //
+  // In a packaged .deb/.AppImage, electron-builder puts files inside an .asar
+  // archive at: resources/app.asar/
+  // Files listed under asarUnpack are ALSO extracted to: resources/app.asar.unpacked/
+  //
+  // child_process.fork() cannot load a file from inside an .asar archive —
+  // it needs a real path on disk. We must point to the unpacked copy.
+  //
+  // app.getAppPath() returns:
+  //   dev:       <project>/
+  //   packaged:  <install>/resources/app.asar   ← inside the archive (wrong for fork)
+  //
+  // The trick: replace 'app.asar' with 'app.asar.unpacked' to get the disk path.
+  const appRoot = app.getAppPath().replace('app.asar', 'app.asar.unpacked');
+  const serverPath = path.join(appRoot, 'server.js');
+
   serverProcess = fork(
-    // ── Absolute path to server.js ──────────────────────────────────────────
-    // __dirname here is the 'electron/' folder
-    // '..' goes up one level to the project root where server.js lives
-    path.join(__dirname, '..', 'server.js'),
+    serverPath,
 
     // ── Arguments to pass to server.js ─────────────────────────────────────
     // Empty array — server.js reads configuration from .env, not from argv
     [],
 
     {
-      // cwd (current working directory) for the child process
-      // server.js does:
-      //   dotenv.config()            → looks for .env in CWD
-      //   fs.readFileSync('server.key') → looks for cert in __dirname (server.js dir)
-      // Setting cwd to the project root ensures both are found correctly
-      cwd: path.join(__dirname, '..'),
+      // cwd must also point to the unpacked root so dotenv finds .env
+      // and server.js finds server.key / server.crt via relative paths
+      cwd: appRoot,
 
       // env — the child process inherits all environment variables from Electron
       // We spread process.env so ACCESS_KEY, SECRET_ACCESS_KEY etc. are available

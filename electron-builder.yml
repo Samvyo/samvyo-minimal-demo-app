@@ -75,6 +75,26 @@ files:
   - server.key
   - server.crt
 
+# ── asar unpacking ────────────────────────────────────────────────────────────
+# electron-builder packs all files into an .asar archive by default.
+# child_process.fork() CANNOT run a file from inside an asar archive —
+# Node.js needs a real file on disk to spawn a new process.
+#
+# asarUnpack lists the files that must be extracted from the asar onto disk:
+#   server.js  → forked as a child process by electron/main.js
+#   server.key → read by server.js with fs.readFileSync at startup
+#   server.crt → read by server.js with fs.readFileSync at startup
+#   .env       → read by dotenv.config() inside server.js
+#   public/    → served as static files by Express from disk
+#   node_modules/ → required by server.js (express, axios, dotenv, etc.)
+asarUnpack:
+  - server.js
+  - server.key
+  - server.crt
+  - .env
+  - public/**/*
+  - node_modules/**/*
+
   # Environment variables — API keys for the Samvyo SDK
   # WARNING: bundling .env means credentials are inside the installer.
   # For a production release: use OS keychain or prompt user for keys instead.
