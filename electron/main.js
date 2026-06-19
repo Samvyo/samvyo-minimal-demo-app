@@ -34,6 +34,21 @@ const {
   shell         // Opens URLs/files in the user's default browser/app
 } = require('electron');
 
+// ── Linux sandbox fix ─────────────────────────────────────────────────────────
+// Chromium's sandbox requires unprivileged user namespaces, which many Linux
+// kernels (especially Ubuntu 22.04+) disable by default.
+// When the sandbox cannot initialise, the Electron window never appears and the
+// app silently does nothing when launched from the Applications menu.
+//
+// app.commandLine.appendSwitch() must be called BEFORE app.whenReady() —
+// command-line flags are read by Chromium during its initialisation phase.
+//
+// Note: electron-builder's executableArgs only applies to AppImage, NOT .deb.
+// This in-code approach works for every distribution method on every Linux distro.
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. IMPORTS — Node.js built-in modules
 // ─────────────────────────────────────────────────────────────────────────────
