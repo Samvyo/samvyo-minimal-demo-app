@@ -136,7 +136,23 @@ let isQuitting = false;
  *   Electron's main process, making crashes and restarts harder to handle.
  *   fork() keeps them cleanly separated.
  */
-function startServer() {
+async function startServer() {
+  // ── Skip fork if port is already occupied (orphan from a crashed session) ──
+  // If a previous Electron instance crashed without cleanly killing its forked
+  // server.js child, that child keeps running as an orphan holding the port.
+  // Forking a second server.js into the same port causes an unhandled EADDRINUSE
+  // crash inside the child. Instead: detect the orphan here and reuse it.
+  const portOccupied = await new Promise((resolve) => {
+    const probe = net.createConnection({ host: '127.0.0.1', port: SERVER_PORT });
+    probe.on('connect', () => { probe.destroy(); resolve(true); });
+    probe.on('error',   () => { probe.destroy(); resolve(false); });
+  });
+
+  if (portOccupied) {
+    console.log(`[Electron] Port ${SERVER_PORT} already in use — reusing existing server`);
+    return; // skip fork; waitForServer() will connect to the orphan immediately
+  }
+
   // ── Resolve the correct server.js path in both dev and packaged builds ────
   // In development:  __dirname = <project>/electron/
   //                  server.js  = <project>/server.js  → path.join(__dirname, '..', 'server.js')
@@ -740,7 +756,7 @@ app.whenReady().then(async () => {
   }
 
   // ── Step B: Start the Express server ─────────────────────────────────────
-  startServer();
+  await startServer();
 
   // ── Step C: Wait until the server is ready ───────────────────────────────
   try {

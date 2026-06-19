@@ -72,6 +72,18 @@ app.get("/", (req, res) => {
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
+httpsServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    // Another instance of server.js is already running on this port.
+    // Exit cleanly — the existing server will handle requests.
+    console.log(`[Server] Port ${port} already in use — exiting cleanly`);
+    process.exit(0);
+  } else {
+    console.error('[Server] Fatal error:', err.message);
+    process.exit(1);
+  }
+});
+
 httpsServer.listen(port, () => {
   console.log(`Secure server running on port ${port}`);
 });
