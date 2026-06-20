@@ -47,6 +47,12 @@ const {
 // This in-code approach works for every distribution method on every Linux distro.
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('no-sandbox');
+  // Chromium uses /dev/shm for shared memory between renderer processes.
+  // On some Linux systems /dev/shm has restrictive permissions or is missing,
+  // causing renderer processes to crash with a FATAL /dev/shm error and
+  // leaving the app window blank white. This flag makes Chromium use /tmp
+  // instead, which is always writable.
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -754,6 +760,21 @@ app.whenReady().then(async () => {
   if (process.platform === 'win32') {
     app.setAppUserModelId('com.samvyo.desktop');
   }
+
+  // ── Step A2: Trust self-signed localhost certificate at session level ──────
+  // The certificate-error event fires after Chromium's SSL rejection path and
+  // can miss fast-failing connections (e.g. when renderer processes restart
+  // after a /dev/shm crash). setCertificateVerifyProc intercepts at the lowest
+  // level — before any rejection — and is the most reliable way to trust a
+  // self-signed cert for localhost.
+  const { session } = require('electron');
+  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+    if (request.hostname === 'localhost') {
+      callback(0); // 0 = verified/trusted
+    } else {
+      callback(-3); // -3 = use Chromium's default verification
+    }
+  });
 
   // ── Step B: Start the Express server ─────────────────────────────────────
   await startServer();
