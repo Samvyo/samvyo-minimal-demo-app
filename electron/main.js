@@ -24,14 +24,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const {
-  app,          // Controls the application lifecycle (ready, quit, activate…)
-  BrowserWindow,// Creates native OS windows — each is a Chromium renderer process
-  ipcMain,      // Receives messages FROM the renderer (web page) via preload bridge
-  Tray,         // Creates an icon in the OS system tray / menu bar
-  Menu,         // Builds native application menus and tray context menus
-  nativeImage,  // Loads image files for tray icons, dock, etc.
-  Notification, // Fires native OS notifications (badge, sound, popup)
-  shell         // Opens URLs/files in the user's default browser/app
+  app,            // Controls the application lifecycle (ready, quit, activate…)
+  BrowserWindow,  // Creates native OS windows — each is a Chromium renderer process
+  ipcMain,        // Receives messages FROM the renderer (web page) via preload bridge
+  Tray,           // Creates an icon in the OS system tray / menu bar
+  Menu,           // Builds native application menus and tray context menus
+  nativeImage,    // Loads image files for tray icons, dock, etc.
+  Notification,   // Fires native OS notifications (badge, sound, popup)
+  session,        // Manages cookies, cache, certificate trust per BrowserWindow session
+  desktopCapturer // Enumerates screens/windows available for capture (screen share)
 } = require('electron');
 
 // ── Linux sandbox fix ─────────────────────────────────────────────────────────
@@ -125,6 +126,11 @@ let tray = null;
 // isQuitting — tracks whether the user explicitly chose "Quit" from the tray menu
 // Used in the window 'close' event to decide: hide to tray vs actually quit
 let isQuitting = false;
+
+// pendingDeepLink — stores a samvyo:// URL received via open-url before the window
+// is ready. On macOS, open-url can fire during startup before createWindow() runs.
+// We hold the URL here and deliver it once ready-to-show fires.
+let pendingDeepLink = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. START THE EXPRESS SERVER
@@ -395,19 +401,22 @@ function createTray() {
   // Attach the context menu to the tray icon
   tray.setContextMenu(contextMenu);
 
-  // On Windows/Linux, single-clicking the tray icon shows the window
-  // On macOS, clicking shows the context menu (handled automatically)
-  tray.on('click', () => {
-    if (mainWindow) {
-      // Toggle: if window is visible → hide it; if hidden → show it
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
+  // On Windows/Linux: single-click toggles the window.
+  // On macOS: clicking the menu-bar icon automatically shows the context menu.
+  //   The 'click' event ALSO fires on macOS — if we toggle the window here,
+  //   the window flashes open/closed while the menu appears. Skip on macOS.
+  if (process.platform !== 'darwin') {
+    tray.on('click', () => {
+      if (mainWindow) {
+        if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
+          mainWindow.hide();
+        } else {
+          mainWindow.show();
+          mainWindow.focus();
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -560,6 +569,14 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();  // Make the window visible to the user
     mainWindow.focus(); // Bring it to the front of all open windows
+
+    // Deliver any deep link that arrived on macOS before the window existed.
+    // open-url can fire during startup while mainWindow is still null — we
+    // stored the URL in pendingDeepLink and deliver it here on first paint.
+    if (pendingDeepLink) {
+      routeDeepLink(pendingDeepLink);
+      pendingDeepLink = null;
+    }
   });
 
   // ── Intercept window close → hide to tray ────────────────────────────────
@@ -689,10 +706,17 @@ function routeDeepLink(url) {
 // This must be called before app.whenReady() for some OS configurations.
 app.setAsDefaultProtocolClient('samvyo');
 
-// macOS: deep links come in via the 'open-url' event on the app object
+// macOS: deep links come in via the 'open-url' event on the app object.
+// This can fire BEFORE app.whenReady() and before createWindow() runs,
+// so mainWindow may be null. Store the URL and deliver it once the window
+// is ready (see pendingDeepLink handling in createWindow → ready-to-show).
 app.on('open-url', (event, url) => {
-  event.preventDefault(); // Stop Electron's default URL handling
-  routeDeepLink(url);
+  event.preventDefault();
+  if (mainWindow) {
+    routeDeepLink(url);
+  } else {
+    pendingDeepLink = url;
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -767,7 +791,6 @@ app.whenReady().then(async () => {
   // after a /dev/shm crash). setCertificateVerifyProc intercepts at the lowest
   // level — before any rejection — and is the most reliable way to trust a
   // self-signed cert for localhost.
-  const { session } = require('electron');
   session.defaultSession.setCertificateVerifyProc((request, callback) => {
     if (request.hostname === 'localhost') {
       callback(0); // 0 = verified/trusted
@@ -796,12 +819,21 @@ app.whenReady().then(async () => {
   // ── Step E: Create the main window and load the app ──────────────────────
   createWindow();
 
-  // ── macOS: re-create the window when the dock icon is clicked ────────────
-  // Standard macOS behaviour: clicking the dock icon when no window is open
-  // should re-open the window (Safari, Finder, etc. all behave this way)
+  // ── macOS: dock icon click — show window or create it ────────────────────
+  // 'activate' fires when the user clicks the dock icon or switches to the app.
+  // Two cases:
+  //   1. No window exists at all (app was fully quit but process still alive)
+  //      → create a new window.
+  //   2. Window exists but is HIDDEN to the tray (user pressed Cmd+W or ✗)
+  //      → getAllWindows().length is still 1 (hidden ≠ destroyed), so we must
+  //         explicitly show it. Without this, dock clicks do nothing — the most
+  //         common macOS-specific Electron complaint.
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 });
