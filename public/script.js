@@ -234,15 +234,24 @@ document
     joinBtn.textContent = "Joining...";
     joinBtn.disabled = true;
 
+    // Helper — always call this on any early exit so the UI is never frozen
+    function resetJoinBtn() {
+      loader.classList.add("hidden");
+      joinBtn.textContent = "Join Room";
+      joinBtn.disabled = false;
+    }
+
     const roomId = document.getElementById("roomId").value;
     const peerName = document.getElementById("peerName").value;
 
     if (!roomId) {
       alert("Please provide RoomId to join.");
+      resetJoinBtn();
       return;
     }
     if (!peerName) {
       alert("Enter your name");
+      resetJoinBtn();
       return;
     }
 
@@ -300,6 +309,12 @@ document
           try {
             await vidScaleClient.joinRoom(joinParams);
 
+            // Hide the loading overlay immediately after joinRoom resolves.
+            // Do NOT rely on videoStart(local) for this — if the user joins with
+            // camera off, videoStart never fires and the z-100 overlay blocks all
+            // button clicks forever.
+            document.getElementById("joiningLoader").classList.add("hidden");
+
             removeAllPeers(); // Clear any stale peer tiles from a previous session
             document.getElementById("lobby-page").classList.add("hidden");
             document.getElementById("call-page").classList.remove("hidden");
@@ -314,6 +329,7 @@ document
             }
           } catch (joinErr) {
             console.error("Error auto-joining room:", joinErr);
+            document.getElementById("joiningLoader").classList.add("hidden");
           }
         });
 
@@ -501,9 +517,11 @@ document
         // Init done — auto-join fires via initSuccess above
       } catch (error) {
         console.error("Error joining room:", error);
+        resetJoinBtn();
       }
     } else {
       alert("Failed to fetch session token.");
+      resetJoinBtn();
     }
   });
 // joinButton removed — joining handled automatically inside initSuccess
@@ -523,11 +541,11 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
 
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("closeButton").disabled = true;
-    document.getElementById("joinButton").disabled = false;
+    document.getElementById("initButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
-    try { stopTxRecorder(); } catch { } tu
+    try { stopTxRecorder(); } catch { }
     try { txSourceNodes.clear(); txGainNodes.clear(); } catch { }
   }
 });
@@ -546,7 +564,7 @@ document.getElementById("closeButton").addEventListener("click", async () => {
     document.getElementById("closeButton").classList.add("hidden");
     // document.getElementById("recordingStartButton").disabled = true;
     // document.getElementById("recordingStopButton").disabled = true;
-    document.getElementById("joinButton").disabled = false;
+    document.getElementById("initButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
     clearCaptions();
@@ -589,30 +607,50 @@ document.getElementById("closeButton").addEventListener("click", async () => {
 
 function showModAuth({ requesterName, requesterPeerId, text }) {
   const div = document.getElementById("additional");
-  var span = document.createElement("span");
-  span.innerHTML = text;
-  div.appendChild(span);
-  const button1 = document.createElement("button");
-  button1.innerHTML = "Allow";
-  button1.onclick = () => {
+  div.className = "absolute top-4 left-4 z-50 bg-meetGray border border-gray-600 rounded-xl p-4 shadow-xl w-72";
+  div.innerHTML = `
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-meetBlue text-[20px]">person</span>
+        <p class="text-sm font-semibold text-white">Waiting to join</p>
+      </div>
+      <p class="text-xs text-gray-300">${requesterName || 'A participant'} wants to join the room</p>
+      <div class="flex gap-2 pt-1">
+        <button id="allowJoinBtn"
+          class="flex-1 bg-meetBlue hover:bg-blue-400 text-gray-900 font-semibold text-sm py-2 rounded-full transition-colors">
+          Allow
+        </button>
+        <button id="denyJoinBtn"
+          class="flex-1 bg-meetRed hover:bg-red-600 text-white font-semibold text-sm py-2 rounded-full transition-colors">
+          Deny
+        </button>
+      </div>
+    </div>
+  `;
+  div.classList.remove("hidden");
+
+  document.getElementById("allowJoinBtn").onclick = () => {
     vidScaleClient.allowRoomJoin(requesterPeerId);
-    div.style.display = "none";
+    div.classList.add("hidden");
+    div.innerHTML = "";
   };
-  div.appendChild(button1);
-  const button2 = document.createElement("button");
-  button2.innerHTML = "Deny";
-  button2.onclick = () => {
+  document.getElementById("denyJoinBtn").onclick = () => {
     vidScaleClient.denyRoomJoin(requesterPeerId);
-    div.style.display = "none";
+    div.classList.add("hidden");
+    div.innerHTML = "";
   };
-  div.appendChild(button2);
 }
 
 function showAuthNotification({ requesterName, requesterPeerId, text }) {
-  const div = document.getElementById("additional");
-  var span = document.createElement("span");
-  span.innerHTML = text;
-  div.appendChild(span);
+  const div = document.getElementById("notification");
+  div.className = "absolute top-4 left-4 z-50 bg-meetGray border border-gray-600 rounded-xl px-4 py-3 shadow-xl";
+  div.innerHTML = `
+    <div class="flex items-center gap-3">
+      <div class="w-2 h-2 bg-meetBlue rounded-full animate-pulse flex-shrink-0"></div>
+      <p class="text-sm text-gray-200">Waiting for moderator approval...</p>
+    </div>
+  `;
+  div.classList.remove("hidden");
 }
 
 function featureScreenShare(peerId) {
