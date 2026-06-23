@@ -84,6 +84,11 @@ httpsServer.on('error', (err) => {
   }
 });
 
-httpsServer.listen(port, () => {
+// Bind to 127.0.0.1 (loopback only) — prevents Windows Firewall from prompting.
+// Binding to 0.0.0.0 (the default when no host is specified) triggers a
+// "Windows protected your PC" Firewall dialog on first launch. Users who click
+// "Block" will get ERR_CONNECTION_REFUSED on every subsequent launch.
+// All Electron connections come from localhost, so loopback-only is sufficient.
+httpsServer.listen(port, '127.0.0.1', () => {
   console.log(`Secure server running on port ${port}`);
 });

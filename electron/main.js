@@ -632,20 +632,28 @@ ipcMain.handle('media:pickScreenSource', async () => {
   // desktopCapturer is an Electron API — must be required from the main process
   const { desktopCapturer } = require('electron');
 
-  // getSources() enumerates all capturable sources
-  const sources = await desktopCapturer.getSources({
-    types: ['screen', 'window'], // 'screen' = full monitor, 'window' = app windows
-    thumbnailSize: { width: 320, height: 180 } // Preview image size in pixels
-  });
+  try {
+    // getSources() enumerates all capturable sources
+    const sources = await desktopCapturer.getSources({
+      types: ['screen', 'window'], // 'screen' = full monitor, 'window' = app windows
+      thumbnailSize: { width: 320, height: 180 } // Preview image size in pixels
+    });
 
-  // Return only the data the renderer needs — never return raw Electron objects
-  // thumbnail.toDataURL() converts the NativeImage to a base64 data URL
-  // that can be set as <img src="..."> in the web page
-  return sources.map((source) => ({
-    id: source.id,                         // e.g. "screen:0:0" or "window:12345:0"
-    name: source.name,                     // e.g. "Entire Screen" or "Chrome"
-    thumbnail: source.thumbnail.toDataURL() // base64 PNG preview
-  }));
+    // Return only the data the renderer needs — never return raw Electron objects
+    // thumbnail.toDataURL() converts the NativeImage to a base64 data URL
+    // that can be set as <img src="..."> in the web page
+    return sources.map((source) => ({
+      id: source.id,                         // e.g. "screen:0:0" or "window:12345:0"
+      name: source.name,                     // e.g. "Entire Screen" or "Chrome"
+      thumbnail: source.thumbnail.toDataURL() // base64 PNG preview
+    }));
+  } catch (err) {
+    // getSources() can fail if the GPU process crashes or (on macOS) Screen
+    // Recording permission is hard-denied. Return empty list so the caller
+    // can show a "screen share unavailable" message instead of crashing.
+    console.error('[Electron] desktopCapturer.getSources() failed:', err.message);
+    return [];
+  }
 });
 
 // ── meeting:started (one-way, fire-and-forget) ──────────────────────────────
