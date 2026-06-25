@@ -204,6 +204,23 @@ contextBridge.exposeInMainWorld('samvyoDesktop', {
     const listener = (_event, info) => callback(info);
     ipcRenderer.on('update:available', listener);
     return () => ipcRenderer.removeListener('update:available', listener);
+  },
+
+  // ── onScreenShareDenied(callback) ────────────────────────────────────────
+  //
+  // WHAT:  Fires when macOS Screen Recording permission is not granted.
+  // WHY:   On macOS 10.15+, getSources() returns an empty array when Screen
+  //        Recording is denied — no error, no rejection, just silence.
+  //        Main process detects this and pushes this event so the UI can
+  //        show the user actionable instructions instead of silently failing.
+  // HOW:   Main pushes 'screenshare:permission-denied' → callback fires
+  //
+  // @param  {Function} callback — called with no arguments
+  // Returns: Function — unsubscribe function
+  onScreenShareDenied: (callback) => {
+    const listener = (_event) => callback();
+    ipcRenderer.on('screenshare:permission-denied', listener);
+    return () => ipcRenderer.removeListener('screenshare:permission-denied', listener);
   }
 
 }); // end contextBridge.exposeInMainWorld('samvyoDesktop', ...)

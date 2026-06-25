@@ -552,11 +552,20 @@ function createWindow() {
             callback({ video: sources[0] });
           } else {
             callback({});
+            // Notify the renderer so it can show actionable instructions.
+            // On macOS the empty array is almost always a missing Screen
+            // Recording permission — silent failure confuses users.
+            if (process.platform === 'darwin' && mainWindow) {
+              mainWindow.webContents.send('screenshare:permission-denied');
+            }
           }
         })
         .catch(() => {
           // getSources() threw — permissions hard-denied or OS error.
           callback({});
+          if (process.platform === 'darwin' && mainWindow) {
+            mainWindow.webContents.send('screenshare:permission-denied');
+          }
         });
     }
   );

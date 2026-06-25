@@ -1021,6 +1021,18 @@ function clearCaptions() {
     if (container) container.style.display = "none";
   } catch { }
 }
+// macOS Screen Recording permission denied → show actionable message
+if (window.isDesktop && window.samvyoDesktop && window.samvyoDesktop.onScreenShareDenied) {
+  window.samvyoDesktop.onScreenShareDenied(() => {
+    alert(
+      "Screen Recording permission is required to share your screen.\n\n" +
+      "To enable it:\n" +
+      "  System Preferences (or System Settings) → Privacy & Security → Screen Recording\n" +
+      "  → enable Samvyo, then relaunch the app."
+    );
+  });
+}
+
 //settings Toggle
 const settingsBtn = document.getElementById("settingsButton");
 const settingsPanel = document.getElementById("settingsDropdown");
