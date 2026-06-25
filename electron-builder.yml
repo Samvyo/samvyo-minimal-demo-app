@@ -86,6 +86,11 @@ nsis:
 mac:
   icon: assets/icons/mac/icon.icns
   category: public.app-category.business
+  # Info.plist usage descriptions required by macOS for camera and microphone.
+  # Without these, macOS silently denies access in packaged builds.
+  extendInfo:
+    NSCameraUsageDescription: "Samvyo needs camera access to show your video in meetings."
+    NSMicrophoneUsageDescription: "Samvyo needs microphone access for audio in meetings."
   target:
     - target: dmg   # Standard macOS distribution format
       arch:
