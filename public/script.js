@@ -293,9 +293,7 @@ document
 
 
           const moderatorCheckbox = document.getElementById("moderatorCheckbox");
-          if (moderatorCheckbox && moderatorCheckbox.checked) {
-            inputParams.peerType = "moderator";
-          }
+          inputParams.peerType = (moderatorCheckbox && moderatorCheckbox.checked) ? "moderator" : "participant";
 
           const joinParams = {
             peerName,
@@ -541,6 +539,7 @@ document.getElementById("leaveButton").addEventListener("click", async () => {
 
     document.getElementById("leaveButton").disabled = true;
     document.getElementById("closeButton").disabled = true;
+    document.getElementById("closeButton").classList.add("hidden");
     document.getElementById("initButton").disabled = false;
     removeAllPeers(); //removes the peerList div upon leaving the room
     showThankYouMessage();
