@@ -24,14 +24,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const {
-  app,          // Controls the application lifecycle (ready, quit, activate…)
-  BrowserWindow,// Creates native OS windows — each is a Chromium renderer process
-  ipcMain,      // Receives messages FROM the renderer (web page) via preload bridge
-  Tray,         // Creates an icon in the OS system tray / menu bar
-  Menu,         // Builds native application menus and tray context menus
-  nativeImage,  // Loads image files for tray icons, dock, etc.
-  Notification, // Fires native OS notifications (badge, sound, popup)
-  shell         // Opens URLs/files in the user's default browser/app
+  app,            // Controls the application lifecycle (ready, quit, activate…)
+  BrowserWindow,  // Creates native OS windows — each is a Chromium renderer process
+  ipcMain,        // Receives messages FROM the renderer (web page) via preload bridge
+  Tray,           // Creates an icon in the OS system tray / menu bar
+  Menu,           // Builds native application menus and tray context menus
+  nativeImage,    // Loads image files for tray icons, dock, etc.
+  Notification,   // Fires native OS notifications (badge, sound, popup)
+  session,        // Manages cookies, cache, certificate trust per BrowserWindow session
+  desktopCapturer // Enumerates screens/windows available for capture (screen share)
 } = require('electron');
 
 // ── Linux sandbox fix ─────────────────────────────────────────────────────────
@@ -47,6 +48,23 @@ const {
 // This in-code approach works for every distribution method on every Linux distro.
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('no-sandbox');
+  // Chromium uses /dev/shm for shared memory between renderer processes.
+  // On some Linux systems /dev/shm has restrictive permissions or is missing,
+  // causing renderer processes to crash with a FATAL /dev/shm error and
+  // leaving the app window blank white. This flag makes Chromium use /tmp
+  // instead, which is always writable.
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
+  // On some Linux systems (especially those running inside snap or with strict
+  // seccomp policies), even /tmp shared memory allocation fails with ESRCH,
+  // causing the renderer to produce a completely blank white window.
+  // --disable-gpu forces Chromium to use software (CPU) rendering which avoids
+  // the GPU process shared memory path entirely.
+  app.commandLine.appendSwitch('disable-gpu');
+  // The zygote is a pre-forked process that spawns renderer processes.
+  // On systems with seccomp restrictions it also fails to allocate shared
+  // memory, which prevents any renderer from painting. Disabling it makes
+  // Chromium spawn renderers directly without the zygote intermediary.
+  app.commandLine.appendSwitch('no-zygote');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +137,11 @@ let tray = null;
 // isQuitting — tracks whether the user explicitly chose "Quit" from the tray menu
 // Used in the window 'close' event to decide: hide to tray vs actually quit
 let isQuitting = false;
+
+// pendingDeepLink — stores a samvyo:// URL received via open-url before the window
+// is ready. On macOS, open-url can fire during startup before createWindow() runs.
+// We hold the URL here and deliver it once ready-to-show fires.
+let pendingDeepLink = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. START THE EXPRESS SERVER
@@ -389,19 +412,22 @@ function createTray() {
   // Attach the context menu to the tray icon
   tray.setContextMenu(contextMenu);
 
-  // On Windows/Linux, single-clicking the tray icon shows the window
-  // On macOS, clicking shows the context menu (handled automatically)
-  tray.on('click', () => {
-    if (mainWindow) {
-      // Toggle: if window is visible → hide it; if hidden → show it
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
+  // On Windows/Linux: single-click toggles the window.
+  // On macOS: clicking the menu-bar icon automatically shows the context menu.
+  //   The 'click' event ALSO fires on macOS — if we toggle the window here,
+  //   the window flashes open/closed while the menu appears. Skip on macOS.
+  if (process.platform !== 'darwin') {
+    tray.on('click', () => {
+      if (mainWindow) {
+        if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
+          mainWindow.hide();
+        } else {
+          mainWindow.show();
+          mainWindow.focus();
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -526,11 +552,20 @@ function createWindow() {
             callback({ video: sources[0] });
           } else {
             callback({});
+            // Notify the renderer so it can show actionable instructions.
+            // On macOS the empty array is almost always a missing Screen
+            // Recording permission — silent failure confuses users.
+            if (process.platform === 'darwin' && mainWindow) {
+              mainWindow.webContents.send('screenshare:permission-denied');
+            }
           }
         })
         .catch(() => {
           // getSources() threw — permissions hard-denied or OS error.
           callback({});
+          if (process.platform === 'darwin' && mainWindow) {
+            mainWindow.webContents.send('screenshare:permission-denied');
+          }
         });
     }
   );
@@ -554,6 +589,14 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();  // Make the window visible to the user
     mainWindow.focus(); // Bring it to the front of all open windows
+
+    // Deliver any deep link that arrived on macOS before the window existed.
+    // open-url can fire during startup while mainWindow is still null — we
+    // stored the URL in pendingDeepLink and deliver it here on first paint.
+    if (pendingDeepLink) {
+      routeDeepLink(pendingDeepLink);
+      pendingDeepLink = null;
+    }
   });
 
   // ── Intercept window close → hide to tray ────────────────────────────────
@@ -609,20 +652,28 @@ ipcMain.handle('media:pickScreenSource', async () => {
   // desktopCapturer is an Electron API — must be required from the main process
   const { desktopCapturer } = require('electron');
 
-  // getSources() enumerates all capturable sources
-  const sources = await desktopCapturer.getSources({
-    types: ['screen', 'window'], // 'screen' = full monitor, 'window' = app windows
-    thumbnailSize: { width: 320, height: 180 } // Preview image size in pixels
-  });
+  try {
+    // getSources() enumerates all capturable sources
+    const sources = await desktopCapturer.getSources({
+      types: ['screen', 'window'], // 'screen' = full monitor, 'window' = app windows
+      thumbnailSize: { width: 320, height: 180 } // Preview image size in pixels
+    });
 
-  // Return only the data the renderer needs — never return raw Electron objects
-  // thumbnail.toDataURL() converts the NativeImage to a base64 data URL
-  // that can be set as <img src="..."> in the web page
-  return sources.map((source) => ({
-    id: source.id,                         // e.g. "screen:0:0" or "window:12345:0"
-    name: source.name,                     // e.g. "Entire Screen" or "Chrome"
-    thumbnail: source.thumbnail.toDataURL() // base64 PNG preview
-  }));
+    // Return only the data the renderer needs — never return raw Electron objects
+    // thumbnail.toDataURL() converts the NativeImage to a base64 data URL
+    // that can be set as <img src="..."> in the web page
+    return sources.map((source) => ({
+      id: source.id,                         // e.g. "screen:0:0" or "window:12345:0"
+      name: source.name,                     // e.g. "Entire Screen" or "Chrome"
+      thumbnail: source.thumbnail.toDataURL() // base64 PNG preview
+    }));
+  } catch (err) {
+    // getSources() can fail if the GPU process crashes or (on macOS) Screen
+    // Recording permission is hard-denied. Return empty list so the caller
+    // can show a "screen share unavailable" message instead of crashing.
+    console.error('[Electron] desktopCapturer.getSources() failed:', err.message);
+    return [];
+  }
 });
 
 // ── meeting:started (one-way, fire-and-forget) ──────────────────────────────
@@ -683,10 +734,17 @@ function routeDeepLink(url) {
 // This must be called before app.whenReady() for some OS configurations.
 app.setAsDefaultProtocolClient('samvyo');
 
-// macOS: deep links come in via the 'open-url' event on the app object
+// macOS: deep links come in via the 'open-url' event on the app object.
+// This can fire BEFORE app.whenReady() and before createWindow() runs,
+// so mainWindow may be null. Store the URL and deliver it once the window
+// is ready (see pendingDeepLink handling in createWindow → ready-to-show).
 app.on('open-url', (event, url) => {
-  event.preventDefault(); // Stop Electron's default URL handling
-  routeDeepLink(url);
+  event.preventDefault();
+  if (mainWindow) {
+    routeDeepLink(url);
+  } else {
+    pendingDeepLink = url;
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -755,6 +813,20 @@ app.whenReady().then(async () => {
     app.setAppUserModelId('com.samvyo.desktop');
   }
 
+  // ── Step A2: Trust self-signed localhost certificate at session level ──────
+  // The certificate-error event fires after Chromium's SSL rejection path and
+  // can miss fast-failing connections (e.g. when renderer processes restart
+  // after a /dev/shm crash). setCertificateVerifyProc intercepts at the lowest
+  // level — before any rejection — and is the most reliable way to trust a
+  // self-signed cert for localhost.
+  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+    if (request.hostname === 'localhost') {
+      callback(0); // 0 = verified/trusted
+    } else {
+      callback(-3); // -3 = use Chromium's default verification
+    }
+  });
+
   // ── Step B: Start the Express server ─────────────────────────────────────
   await startServer();
 
@@ -775,12 +847,21 @@ app.whenReady().then(async () => {
   // ── Step E: Create the main window and load the app ──────────────────────
   createWindow();
 
-  // ── macOS: re-create the window when the dock icon is clicked ────────────
-  // Standard macOS behaviour: clicking the dock icon when no window is open
-  // should re-open the window (Safari, Finder, etc. all behave this way)
+  // ── macOS: dock icon click — show window or create it ────────────────────
+  // 'activate' fires when the user clicks the dock icon or switches to the app.
+  // Two cases:
+  //   1. No window exists at all (app was fully quit but process still alive)
+  //      → create a new window.
+  //   2. Window exists but is HIDDEN to the tray (user pressed Cmd+W or ✗)
+  //      → getAllWindows().length is still 1 (hidden ≠ destroyed), so we must
+  //         explicitly show it. Without this, dock clicks do nothing — the most
+  //         common macOS-specific Electron complaint.
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 });

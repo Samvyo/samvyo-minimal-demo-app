@@ -86,9 +86,20 @@ nsis:
 mac:
   icon: assets/icons/mac/icon.icns
   category: public.app-category.business
+  # Info.plist usage descriptions required by macOS for camera and microphone.
+  # Without these, macOS silently denies access in packaged builds.
+  extendInfo:
+    NSCameraUsageDescription: "Samvyo needs camera access to show your video in meetings."
+    NSMicrophoneUsageDescription: "Samvyo needs microphone access for audio in meetings."
   target:
     - target: dmg   # Standard macOS distribution format
+      arch:
+        - x64    # Intel Macs (pre-2020)
+        - arm64  # Apple Silicon (M1/M2/M3)
     - target: zip   # Zip of .app bundle (needed for auto-update later)
+      arch:
+        - x64
+        - arm64
   # hardenedRuntime and notarization intentionally omitted — unsigned build.
   # Users bypass Gatekeeper via: right-click → Open → Open
 
