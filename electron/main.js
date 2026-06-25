@@ -54,6 +54,17 @@ if (process.platform === 'linux') {
   // leaving the app window blank white. This flag makes Chromium use /tmp
   // instead, which is always writable.
   app.commandLine.appendSwitch('disable-dev-shm-usage');
+  // On some Linux systems (especially those running inside snap or with strict
+  // seccomp policies), even /tmp shared memory allocation fails with ESRCH,
+  // causing the renderer to produce a completely blank white window.
+  // --disable-gpu forces Chromium to use software (CPU) rendering which avoids
+  // the GPU process shared memory path entirely.
+  app.commandLine.appendSwitch('disable-gpu');
+  // The zygote is a pre-forked process that spawns renderer processes.
+  // On systems with seccomp restrictions it also fails to allocate shared
+  // memory, which prevents any renderer from painting. Disabling it makes
+  // Chromium spawn renderers directly without the zygote intermediary.
+  app.commandLine.appendSwitch('no-zygote');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
